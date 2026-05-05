@@ -54,11 +54,12 @@ for user_data in test_users:
     )
     
     # Crear perfil de rol
-    UserRole.objects.create(
-        user=user,
-        role=role,
-        is_active=True
-    )
+            UserRole.objects.create(
+                user=user,
+                role=role,
+                is_active=True,
+                phone=user_data.get('phone', '')
+            )
     
     print(f"✓ Usuario {email} creado como {role}")
 

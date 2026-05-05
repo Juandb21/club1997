@@ -53,10 +53,18 @@ def home_view(request):
     """Página de inicio con información del club"""
     canchas = Cancha.objects.filter(estado=True)
     tarifas = TarifaHoraria.objects.select_related('cancha').filter(cancha__estado=True)
+
+    # Ordenar tarifas por franja: mañana, tarde, noche
+    order_map = {'mañana': 0, 'tarde': 1, 'noche': 2}
+    cancha_tarifas = []
+    for cancha in canchas:
+        t_for_cancha = [t for t in tarifas if t.cancha_id == cancha.id]
+        t_for_cancha.sort(key=lambda x: order_map.get(x.franja, 99))
+        cancha_tarifas.append({'cancha': cancha, 'tarifas': t_for_cancha})
     
     context = {
         'canchas': canchas,
-        'tarifas': tarifas,
+        'cancha_tarifas': cancha_tarifas,
         'franjas': {
             'mañana': 'Mañana (8:00 - 12:00)',
             'tarde': 'Tarde (12:00 - 18:00)',
@@ -81,6 +89,7 @@ def register_view(request):
     """Registro de nuevos usuarios (clientes por defecto)"""
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '').strip()
+        celular = request.POST.get('celular', '').strip()
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
         password_confirm = request.POST.get('password_confirm', '')
@@ -115,7 +124,8 @@ def register_view(request):
             # Crear perfil de rol (cliente por defecto)
             UserRole.objects.create(
                 user=user,
-                role='cliente'
+                role='cliente',
+                phone=celular
             )
             
             messages.success(request, 'Registro exitoso. Por favor inicia sesión.')
@@ -218,7 +228,9 @@ def admin_cancha_crear(request):
 def admin_cancha_editar(request, cancha_id):
     """Edita una cancha existente"""
     cancha = get_object_or_404(Cancha, id=cancha_id)
-    
+    # obtener tarifas relacionadas para mostrarlas
+    tarifas = TarifaHoraria.objects.filter(cancha=cancha)
+
     if request.method == 'POST':
         cancha.nombre = request.POST.get('nombre')
         cancha.tipo = request.POST.get('tipo')
@@ -226,13 +238,28 @@ def admin_cancha_editar(request, cancha_id):
         cancha.descripcion = request.POST.get('descripcion')
         cancha.estado = request.POST.get('estado') == 'on'
         cancha.save()
-        
+
+        # Procesar posibles cambios en las tarifas: solo actualizar si se envía un valor
+        for tarifa in tarifas:
+            key = f'precio_{tarifa.id}'
+            precio_str = request.POST.get(key)
+            if precio_str is not None and precio_str != '':
+                try:
+                    precio = int(precio_str)
+                    if precio != tarifa.precio_por_hora:
+                        tarifa.precio_por_hora = precio
+                        tarifa.save()
+                except ValueError:
+                    messages.error(request, f'Precio inválido para {tarifa.get_franja_display()}')
+                    return redirect('admin_cancha_editar', cancha_id=cancha_id)
+
         messages.success(request, 'Cancha actualizada exitosamente.')
         return redirect('admin_canchas_list')
-    
+
     return render(request, 'admin/canchas/editar.html', {
         'cancha': cancha,
-        'tipos_cancha': Cancha._meta.get_field('tipo').choices
+        'tipos_cancha': Cancha._meta.get_field('tipo').choices,
+        'tarifas': tarifas,
     })
 
 
@@ -378,14 +405,22 @@ def reserva_crear(request):
     tarifas = TarifaHoraria.objects.select_related('cancha').filter(cancha__estado=True)
     
     # Organizar tarifas por cancha
+    # Ordenar las tarifas por franja para cada cancha: mañana, tarde, noche
+    order_map = {'mañana': 0, 'tarde': 1, 'noche': 2}
     tarifas_por_cancha = {}
     for tarifa in tarifas:
         if tarifa.cancha.id not in tarifas_por_cancha:
             tarifas_por_cancha[tarifa.cancha.id] = []
         tarifas_por_cancha[tarifa.cancha.id].append({
+            'franja_key': tarifa.franja,
             'franja': tarifa.get_franja_display(),
             'precio': tarifa.precio_por_hora
         })
+    # Ordenar listas
+    for k, v in tarifas_por_cancha.items():
+        v.sort(key=lambda x: order_map.get(x['franja_key'], 99))
+        # eliminar la clave auxiliar antes de serializar
+        tarifas_por_cancha[k] = [{'franja': x['franja'], 'precio': x['precio']} for x in v]
     
     context = {
         'canchas': canchas,
@@ -524,6 +559,10 @@ def registrar_pago(request, reserva_id):
             # Pago en efectivo: el cliente propone el monto, recepcionista lo acepta
             # Se crea con estado pendiente_aceptacion y timer de 20 minutos
             fecha_vencimiento = timezone.now() + timedelta(minutes=20)
+            reserva.fecha_vencimiento_efectivo = fecha_vencimiento
+            reserva.metodo_pago = 'efectivo'
+            reserva.save()
+            
             pago = Pago.objects.create(
                 reserva=reserva,
                 monto=monto,
@@ -535,6 +574,8 @@ def registrar_pago(request, reserva_id):
             messages.success(request, 'Pago en efectivo propuesto. La recepcionista tiene 20 minutos para aceptar.')
         else:
             # Otros métodos: se confirman automáticamente
+            reserva.metodo_pago = metodo
+            reserva.save()
             pago = PagoService.crear_pago(reserva, monto, metodo, referencia, estado='confirmado')
             PagoService.confirmar_pago(pago)
             messages.success(request, 'Pago registrado exitosamente.')
@@ -562,7 +603,15 @@ def factura_detalle(request, factura_id):
         messages.error(request, 'No tienes permiso para ver esta factura.')
         return redirect('/')
     
-    return render(request, 'facturas/detalle.html', {'factura': factura})
+    # Determinar URL de volver según rol
+    if es_admin(request.user):
+        volver = 'admin_dashboard'
+    elif es_recepcionista(request.user):
+        volver = 'recepcionista_dashboard'
+    else:
+        volver = 'cliente_dashboard'
+
+    return render(request, 'facturas/detalle.html', {'factura': factura, 'volver_url': volver})
 
 
 # ============ RF-11: PUNTO DE VENTA (Recepcionista) ============
@@ -653,7 +702,15 @@ def facturas_lista(request):
     else:
         facturas = Factura.objects.none()
     
-    return render(request, 'facturas/lista.html', {'facturas': facturas})
+    # Determinar URL de volver según rol
+    if es_admin(request.user):
+        volver = 'admin_dashboard'
+    elif es_recepcionista(request.user):
+        volver = 'recepcionista_dashboard'
+    else:
+        volver = 'cliente_dashboard'
+
+    return render(request, 'facturas/lista.html', {'facturas': facturas, 'volver_url': volver})
 
 
 # ============ RF-13: GESTIÓN DE PRODUCTOS (Admin) ============
@@ -923,6 +980,55 @@ def cliente_dashboard(request):
 
 
 @login_required
+def perfil(request):
+    """Vista de perfil donde el usuario puede cambiar su contraseña y actualizar celular"""
+    user = request.user
+    try:
+        role_profile = user.role_profile
+    except Exception:
+        role_profile = None
+
+    if request.method == 'POST':
+        # Actualizar celular opcional
+        celular = request.POST.get('celular', '').strip()
+        if role_profile is not None:
+            role_profile.phone = celular
+            role_profile.save()
+
+        # Cambio de contraseña
+        current = request.POST.get('current_password', '')
+        new = request.POST.get('new_password', '')
+        new_confirm = request.POST.get('new_password_confirm', '')
+
+        if current or new or new_confirm:
+            if not user.check_password(current):
+                messages.error(request, 'La contraseña actual es incorrecta.')
+                return redirect('perfil')
+            if new != new_confirm:
+                messages.error(request, 'La nueva contraseña y su confirmación no coinciden.')
+                return redirect('perfil')
+            if len(new) < 6:
+                messages.error(request, 'La nueva contraseña debe tener al menos 6 caracteres.')
+                return redirect('perfil')
+
+            user.set_password(new)
+            user.save()
+            # Mantener sesión: re-autenticar
+            login(request, user)
+            messages.success(request, 'Contraseña actualizada correctamente.')
+            return redirect('perfil')
+
+        messages.success(request, 'Datos actualizados correctamente.')
+        return redirect('perfil')
+
+    contexto = {
+        'user': user,
+        'role_profile': role_profile,
+    }
+    return render(request, 'cliente/perfil.html', contexto)
+
+
+@login_required
 @user_passes_test(es_recepcionista)
 def recepcionista_dashboard(request):
     """Dashboard para recepcionistas"""
@@ -939,11 +1045,41 @@ def recepcionista_dashboard(request):
         fecha__lte=fin_semana
     ).order_by('fecha', 'hora_inicio')
     
-    # Pagos en efectivo pendientes de aceptación (nuevos pagos en efectivo)
-    pagos_efectivo_pendientes = Pago.objects.filter(
-        metodo='efectivo',
-        estado='pendiente_aceptacion'
-    ).select_related('reserva__cliente', 'reserva__cancha').order_by('fecha_vencimiento')
+    # Pagos en efectivo pendientes: buscamos reservas con pago en efectivo pendiente
+    ahora = timezone.now()
+    reservas_efectivo_qs = Reserva.objects.filter(
+        metodo_pago='efectivo',
+        estado='pendiente',
+        fecha_vencimiento_efectivo__isnull=False
+    ).select_related('cliente', 'cancha')
+
+    # Verificar vencimientos y auto-cancelar si es necesario
+    for r in reservas_efectivo_qs:
+        r.verifica_vencimiento_efectivo()
+
+    # Volver a filtrar después de actualizar estados
+    reservas_efectivo_qs = Reserva.objects.filter(
+        metodo_pago='efectivo',
+        estado='pendiente',
+        fecha_vencimiento_efectivo__isnull=False
+    ).select_related('cliente', 'cancha')
+
+    reservas_efectivo_pendientes = []
+    for r in reservas_efectivo_qs:
+        # calcular tiempo restante en segundos
+        if r.fecha_vencimiento_efectivo:
+            delta = r.fecha_vencimiento_efectivo - ahora
+            segundos_restantes = int(delta.total_seconds())
+        else:
+            segundos_restantes = None
+
+        # Filtrar solo reservas con ≤ 20 minutos (1200 segundos) restantes
+        if segundos_restantes is not None and segundos_restantes <= 1200 and segundos_restantes > 0:
+            reservas_efectivo_pendientes.append({
+                'reserva': r,
+                'segundos_restantes': segundos_restantes,
+                'falta_pagar': r.get_falta_pagar()
+            })
     
     # Ventas del día
     ventas_hoy = Venta.objects.filter(created_at__date=hoy)
@@ -952,7 +1088,7 @@ def recepcionista_dashboard(request):
         'hoy': hoy,
         'reservas_hoy': reservas_hoy,
         'reservas_semana': reservas_semana,
-        'pagos_efectivo_pendientes': pagos_efectivo_pendientes,
+        'reservas_efectivo_pendientes': reservas_efectivo_pendientes,
         'ventas_hoy': ventas_hoy,
         'total_ventas_hoy': ventas_hoy.aggregate(Sum('valor_total'))['valor_total__sum'] or 0,
         'cantidad_reservas_hoy': reservas_hoy.filter(estado='confirmada').count(),
@@ -961,6 +1097,164 @@ def recepcionista_dashboard(request):
     }
     
     return render(request, 'recepcionista/dashboard.html', context)
+
+
+@require_http_methods(["GET"])
+@login_required
+@user_passes_test(es_recepcionista)
+def reservas_por_fecha_api(request):
+    """API que devuelve reservas para una fecha dada (JSON)"""
+    fecha = request.GET.get('fecha')
+    cancha_id = request.GET.get('cancha_id')
+
+    try:
+        fecha_obj = datetime.strptime(fecha, '%Y-%m-%d').date()
+    except Exception:
+        return JsonResponse({'error': 'Fecha inválida'}, status=400)
+
+    qs = Reserva.objects.filter(fecha=fecha_obj).select_related('cliente', 'cancha').order_by('hora_inicio')
+    if cancha_id:
+        qs = qs.filter(cancha_id=cancha_id)
+
+    ahora = timezone.now()
+    resultados = []
+    for r in qs:
+        minutos_restantes = None
+        if r.fecha_vencimiento_efectivo:
+            minutos_restantes = int((r.fecha_vencimiento_efectivo - ahora).total_seconds() // 60)
+        resultados.append({
+            'id': r.id,
+            'hora_inicio': r.hora_inicio.strftime('%H:%M'),
+            'cancha': r.cancha.nombre,
+            'cliente': r.cliente.first_name if r.cliente else None,
+            'valor_total': float(r.valor_total) if r.valor_total is not None else 0,
+            'valor_pagado': float(r.valor_pagado) if r.valor_pagado is not None else 0,
+            'falta_pagar': float(r.get_falta_pagar() or 0),
+            'metodo_pago': r.metodo_pago,
+            'estado': r.estado,
+            'minutos_restantes': minutos_restantes,
+        })
+
+    return JsonResponse({'reservas': resultados})
+
+
+@require_http_methods(["GET"])
+@login_required
+@user_passes_test(es_recepcionista)
+def pagos_pendientes_api(request):
+    """API que devuelve HTML de tabla de pagos pendientes con segundos actualizados (AJAX)."""
+    ahora = timezone.now()
+    reservas_efectivo_qs = Reserva.objects.filter(
+        metodo_pago='efectivo',
+        estado='pendiente',
+        fecha_vencimiento_efectivo__isnull=False
+    ).select_related('cliente', 'cancha')
+
+    # Verificar vencimientos y auto-cancelar si es necesario
+    for r in reservas_efectivo_qs:
+        r.verifica_vencimiento_efectivo()
+
+    # Volver a filtrar después de actualizar estados
+    reservas_efectivo_qs = Reserva.objects.filter(
+        metodo_pago='efectivo',
+        estado='pendiente',
+        fecha_vencimiento_efectivo__isnull=False
+    ).select_related('cliente', 'cancha')
+
+    reservas_efectivo_pendientes = []
+    for r in reservas_efectivo_qs:
+        if r.fecha_vencimiento_efectivo:
+            delta = r.fecha_vencimiento_efectivo - ahora
+            segundos_restantes = int(delta.total_seconds())
+        else:
+            segundos_restantes = None
+
+        if segundos_restantes is not None and segundos_restantes <= 1200 and segundos_restantes > 0:
+            reservas_efectivo_pendientes.append({
+                'reserva': r,
+                'segundos_restantes': segundos_restantes,
+                'falta_pagar': r.get_falta_pagar()
+            })
+
+    # Generar HTML de la tabla
+    html = '<table><thead><tr>'
+    html += '<th>Hora</th><th>Cliente</th><th>Cancha</th><th>Total</th><th>Monto a Pagar</th><th>Tiempo restante</th><th>Acciones</th>'
+    html += '</tr></thead><tbody>'
+    
+    if reservas_efectivo_pendientes:
+        for item in reservas_efectivo_pendientes:
+            r = item['reserva']
+            seg = item['segundos_restantes']
+            mins = seg // 60
+            secs = seg % 60
+            tiempo_display = f'{mins:02d}:{secs:02d}'
+            html += f'<tr style="background: #fff3e0;" class="pago-row" data-reserva-id="{r.id}" data-segundos="{seg}">'
+            html += f'<td>{r.hora_inicio.strftime("%H:%M")}</td>'
+            html += f'<td><strong>{r.cliente.first_name}</strong></td>'
+            html += f'<td>{r.cancha.nombre}</td>'
+            html += f'<td style="font-weight: 600;">${r.valor_total}</td>'
+            html += f'<td style="color: #dc3545; font-weight: 600;">${r.valor_pagado}</td>'
+            html += f'<td><span class="countdown" data-segundos="{seg}" style="font-weight: 600; font-family: monospace; font-size: 1.1rem;">{tiempo_display}</span></td>'
+            html += f'<td><button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({r.id}, {r.valor_pagado}, {item["falta_pagar"]}, \'{r.cliente.first_name}\')">Pagar</button></td>'
+            html += '</tr>'
+    else:
+        html += '<tr><td colspan="7" style="text-align:center;color:#666;padding:1rem;">No hay pagos en efectivo pendientes</td></tr>'
+    
+    html += '</tbody></table>'
+    
+    return JsonResponse({'html': html})
+
+
+@require_http_methods(["GET"])
+@login_required
+@user_passes_test(es_recepcionista)
+def reservas_eventos_api(request):
+    """Endpoint para FullCalendar: devuelve eventos entre start y end (ISO dates)."""
+    start = request.GET.get('start')
+    end = request.GET.get('end')
+    try:
+        start_dt = datetime.fromisoformat(start)
+        end_dt = datetime.fromisoformat(end)
+    except Exception:
+        return JsonResponse({'error': 'start/end invalidos'}, status=400)
+
+    qs = Reserva.objects.filter(
+        fecha__gte=start_dt.date(),
+        fecha__lte=end_dt.date()
+    ).select_related('cliente', 'cancha')
+
+    ahora = timezone.now()
+    eventos = []
+    for r in qs:
+        start_dt_event = datetime.combine(r.fecha, r.hora_inicio)
+        # Asumimos que la reserva tiene duración en horas guardada en r.duracion_horas o calculada
+        dur = getattr(r, 'duracion_horas', 1)
+        end_dt_event = start_dt_event + timedelta(hours=dur)
+        minutos_restantes = None
+        if getattr(r, 'fecha_vencimiento_efectivo', None):
+            minutos_restantes = int((r.fecha_vencimiento_efectivo - ahora).total_seconds() // 60)
+
+        falta_pagar = float(r.get_falta_pagar() or 0)
+        tiene_saldo = falta_pagar > 0
+
+        eventos.append({
+            'id': r.id,
+            'title': f"{r.cancha.nombre} - {r.cliente.first_name if r.cliente else ''}",
+            'start': start_dt_event.isoformat(),
+            'end': end_dt_event.isoformat(),
+            'extendedProps': {
+                'falta_pagar': falta_pagar,
+                'monto_pagar': float(r.valor_pagado or 0),
+                'valor_total': float(r.valor_total or 0),
+                'valor_pagado': float(r.valor_pagado or 0),
+                'minutos_restantes': minutos_restantes,
+                'cliente': r.cliente.first_name if r.cliente else None,
+                'cancha': r.cancha.nombre,
+                'tiene_saldo': tiene_saldo,
+            }
+        })
+
+    return JsonResponse(eventos, safe=False)
 
 
 @login_required

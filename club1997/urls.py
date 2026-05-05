@@ -37,10 +37,15 @@ urlpatterns = [
     # APIs para disponibilidad
     path('api/disponibilidad/', views.verificar_disponibilidad_api, name='verificar_disponibilidad_api'),
     path('api/horarios-disponibles/', views.horarios_disponibles_api, name='horarios_disponibles_api'),
+    path('api/reservas-por-fecha/', views.reservas_por_fecha_api, name='reservas_por_fecha_api'),
+    path('api/reservas-eventos/', views.reservas_eventos_api, name='reservas_eventos_api'),
+    path('api/pagos-pendientes/', views.pagos_pendientes_api, name='pagos_pendientes_api'),
     
     # Facturas
     path('facturas/', views.facturas_lista, name='facturas_lista'),
     path('facturas/<int:factura_id>/', views.factura_detalle, name='factura_detalle'),
+    # Perfil
+    path('perfil/', views.perfil, name='perfil'),
     
     # Productos (Admin)
     path('admin/productos/', views.admin_productos_list, name='admin_productos_list'),

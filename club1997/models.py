@@ -15,6 +15,7 @@ class UserRole(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='role_profile')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='cliente')
+    phone = models.CharField(max_length=20, blank=True, null=True, help_text="Número de celular")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)

@@ -7,6 +7,8 @@
   <title>Club 1997 - Recepción</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -39,247 +41,75 @@
           Facturas
         </a>
       </div>
-      <!-- Resumen del Día -->
-      <div class="resumen-dia">
-        <h2>Resumen del Día - {{ hoy|date:"d/m/Y" }}</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <div class="stat-info">
-              <span class="stat-label">Reservas Confirmadas</span>
-              <span class="stat-valor">{{ cantidad_reservas_hoy }}</span>
-            </div>
-          </div>
-          <div class="stat-card">
-            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            <div class="stat-info">
-              <span class="stat-label">Ingresos por Ventas</span>
-              <span class="stat-valor">${{ total_ventas_hoy }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Reservas del Día -->
-      <div class="reservaciones-section">
-        <div class="reservaciones-header">
-          <h2>Reservas de Hoy</h2>
-          <a href="{% url 'reserva_crear' %}" class="btn-nueva-reserva">+ Nueva Reserva</a>
-        </div>
-
-        <div class="reservaciones-content">
-          {% if reservas_hoy %}
-            <div class="reservas-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Hora</th>
-                    <th>Cancha</th>
-                    <th>Cliente</th>
-                    <th>Duración</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for reserva in reservas_hoy %}
-                    <tr>
-                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
-                      <td>{{ reserva.cancha.nombre }}</td>
-                      <td>{{ reserva.cliente.first_name }}</td>
-                      <td>{{ reserva.duracion_horas }}h</td>
-                      <td>${{ reserva.valor_total }}</td>
-                      <td><span class="badge badge-{{ reserva.estado }}">{{ reserva.get_estado_display }}</span></td>
-                      <td><a href="{% url 'reserva_detalle' reserva.id %}" class="btn-small">Ver</a></td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="empty-state">
-              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <p>No hay reservas confirmadas para hoy</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Ventas del Día -->
-      <div class="facturas-section">
-        <h2>Ventas Realizadas Hoy</h2>
-        <div class="facturas-content">
-          {% if ventas_hoy %}
-            <div class="facturas-list">
-              {% for venta in ventas_hoy %}
-                <div class="factura-item">
-                  <div class="factura-numero">
-                    <span class="label">Venta</span>
-                    <span class="numero">#{{ venta.id }}</span>
-                  </div>
-                  <div class="factura-fecha">
-                    {{ venta.created_at|time:"H:i" }}
-                  </div>
-                  <div class="factura-total">
-                    <span class="label">Total</span>
-                    <span class="valor">${{ venta.valor_total }}</span>
-                  </div>
-                  <a href="{% url 'factura_detalle' venta.factura.id %}" class="btn-detalle">Ver Factura</a>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <div class="empty-state small">
-              <p>No hay ventas registradas hoy</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Reservas de la Semana -->
-      <div class="reservaciones-section" style="margin-top: 2rem;">
-        <div class="reservaciones-header">
-          <h2>Reservas de la Semana ({{ inicio_semana|date:"d/m" }} - {{ fin_semana|date:"d/m/Y" }})</h2>
-          <a href="{% url 'reserva_crear' %}" class="btn-nueva-reserva">+ Nueva Reserva</a>
-        </div>
-
-        <div class="reservaciones-content">
-          {% if reservas_semana %}
-            <div class="reservas-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Cancha</th>
-                    <th>Cliente</th>
-                    <th>Duración</th>
-                    <th>Total</th>
-                    <th>Pagado</th>
-                    <th>Falta</th>
-                    <th>Método</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for reserva in reservas_semana %}
-                    <tr>
-                      <td>{{ reserva.fecha|date:"d/m" }}</td>
-                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
-                      <td>{{ reserva.cancha.nombre }}</td>
-                      <td>{{ reserva.cliente.first_name|default:"Sin asignar" }}</td>
-                      <td>{{ reserva.duracion_horas }}h</td>
-                      <td>${{ reserva.valor_total }}</td>
-                      <td>${{ reserva.valor_pagado }}</td>
-                      <td style="{% if reserva.get_falta_pagar > 0 %}color: #dc3545; font-weight: 600;{% endif %}">${{ reserva.get_falta_pagar }}</td>
-                      <td>
-                        {% if reserva.metodo_pago %}
-                          <span style="background: #e3f2fd; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">
-                            {{ reserva.get_metodo_pago_display }}
-                          </span>
-                        {% else %}
-                          <span style="color: #999;">-</span>
-                        {% endif %}
-                      </td>
-                      <td><span class="badge badge-{{ reserva.estado }}">{{ reserva.get_estado_display }}</span></td>
-                      <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <a href="{% url 'reserva_detalle' reserva.id %}" class="btn-small">Ver</a>
-                        {% if reserva.get_falta_pagar > 0 %}
-                          <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.get_falta_pagar }}, '{{ reserva.cliente.first_name }}')">Pagar</button>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          {% else %}
-            <div class="empty-state">
-              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-              <p>No hay reservas para esta semana</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Reservas con Pago en Efectivo Pendiente -->
+      <!-- Pagos en Efectivo Pendiente (≤ 20 minutos) -->
       {% if reservas_efectivo_pendientes %}
-        <div class="reservaciones-section" style="margin-top: 2rem; border-left: 4px solid #ff9800;">
+        <div class="reservaciones-section" style="margin-top: 2rem; border-left: 4px solid #ff9800; background: #fffbf7;">
           <div class="reservaciones-header">
-            <h2 style="color: #ff9800;">Confirmación de Pagos en Efectivo Pendientes</h2>
+            <h2 style="color: #ff9800; margin: 0; display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.2rem;">⏱</span> Pagos en Efectivo Pendientes</h2>
           </div>
 
           <div class="reservaciones-content">
-            <div class="reservas-table">
+            <div class="reservas-table" id="tabla-pagos-pendientes">
               <table>
                 <thead>
                   <tr>
-                    <th>Fecha</th>
                     <th>Hora</th>
                     <th>Cliente</th>
                     <th>Cancha</th>
                     <th>Total</th>
-                    <th>Pagado</th>
-                    <th>Falta Pagar</th>
+                    <th>Monto a Pagar</th>
+                    <th>Tiempo restante</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for reserva in reservas_efectivo_pendientes %}
-                    <tr style="background: #fff3e0;">
-                      <td>{{ reserva.fecha|date:"d/m/Y" }}</td>
-                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
-                      <td><strong>{{ reserva.cliente.first_name }}</strong></td>
-                      <td>{{ reserva.cancha.nombre }}</td>
-                      <td style="font-weight: 600;">${{ reserva.valor_total }}</td>
-                      <td style="color: #2a7f62; font-weight: 600;">${{ reserva.valor_pagado }}</td>
-                      <td style="color: #dc3545; font-weight: 600;">${{ reserva.get_falta_pagar }}</td>
-                      <td>
-                        <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.get_falta_pagar }}, '{{ reserva.cliente.first_name }}')">
-                          Registrar Pago
-                        </button>
-                      </td>
-                    </tr>
+                  {% for item in reservas_efectivo_pendientes %}
+                    {% with reserva=item.reserva %}
+                      <tr style="background: #fff3e0;" class="pago-row" data-reserva-id="{{ reserva.id }}" data-segundos="{{ item.segundos_restantes }}">
+                        <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
+                        <td><strong>{{ reserva.cliente.first_name }}</strong></td>
+                        <td>{{ reserva.cancha.nombre }}</td>
+                        <td style="font-weight: 600;">${{ reserva.valor_total }}</td>
+                        <td style="color: #dc3545; font-weight: 600;">${{ reserva.valor_pagado }}</td>
+                        <td>
+                          {% if item.segundos_restantes is not None %}
+                            <span class="countdown" data-segundos="{{ item.segundos_restantes }}" style="font-weight: 600; font-family: monospace; font-size: 1.1rem;">00:00</span>
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                        <td>
+                          <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.valor_pagado }}, {{ item.falta_pagar }}, '{{ reserva.cliente.first_name }}')">
+                            Pagar
+                          </button>
+                        </td>
+                      </tr>
+                    {% endwith %}
                   {% endfor %}
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="reservaciones-section" style="margin-top: 2rem;">
+          <div class="empty-state small">
+            <p style="color: #666; font-size: 0.95rem;">No hay pagos en efectivo pendientes</p>
           </div>
         </div>
       {% endif %}
 
-      <!-- Botones de Acción -->
-      <div style="display: flex; gap: 1rem; margin-top: 3rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: center;">
-        <a href="{% url 'reserva_crear' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
-          Nueva Reserva
-        </a>
-        <a href="{% url 'pdv_nueva_venta' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
-          Nueva Venta
-        </a>
-        <a href="{% url 'facturas_lista' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
-          Ver Facturas
-        </a>
+      <!-- Calendario interactivo: FullCalendar -->
+      <div class="reservaciones-section" style="margin-top: 2rem;">
+        <div class="reservaciones-header">
+          <h2>Calendario de Reservas</h2>
+        </div>
+
+        <div class="reservaciones-content">
+          <div id="calendar" style="max-width: 1000px; margin: 0 auto;"></div>
+          <div id="reservas-por-fecha" class="reservas-table" style="margin-top:1rem;"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -294,7 +124,8 @@
 
       <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
         <p style="margin: 0.5rem 0;"><strong>Cliente:</strong> <span id="modal-cliente"></span></p>
-        <p style="margin: 0.5rem 0;"><strong>Falta por Pagar:</strong> <span id="modal-falta" style="color: #dc3545; font-weight: 600;"></span></p>
+        <p style="margin: 0.5rem 0;"><strong>Monto a Pagar:</strong> <span id="modal-monto-pagar" style="color: #dc3545; font-weight: 600;"></span></p>
+        <p style="margin: 0.5rem 0;"><strong>Falta después del pago:</strong> <span id="modal-falta" style="color: #666;"></span></p>
       </div>
 
       <form id="form-pago" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
@@ -302,9 +133,9 @@
         <input type="hidden" id="reserva-id" name="reserva_id">
 
         <div>
-          <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Monto a Pagar</label>
-          <input type="number" id="monto" name="monto" min="0" step="1" placeholder="0" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
-          <small style="color: #666; display: block; margin-top: 0.3rem;">Máximo disponible: <span id="modal-maximo" style="font-weight: 600;"></span></small>
+          <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Monto a Pagar (Acordado)</label>
+          <input type="text" id="monto" name="monto" readonly style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; background: #f5f5f5; color: #333; font-weight: 600;">
+          <small style="color: #666; display: block; margin-top: 0.3rem;">Este es el monto que el cliente acordó pagar</small>
         </div>
 
         <div>
@@ -331,13 +162,12 @@
   </div>
 
   <script>
-    function abrirModalPago(reservaId, faltaPagar, cliente) {
+    function abrirModalPago(reservaId, montoPagar, faltaPagar, cliente) {
       document.getElementById('reserva-id').value = reservaId;
       document.getElementById('modal-cliente').textContent = cliente;
+      document.getElementById('modal-monto-pagar').textContent = '$' + montoPagar;
       document.getElementById('modal-falta').textContent = '$' + faltaPagar;
-      document.getElementById('modal-maximo').textContent = '$' + faltaPagar;
-      document.getElementById('monto').value = '';
-      document.getElementById('monto').max = faltaPagar;
+      document.getElementById('monto').value = '$' + montoPagar;
       document.getElementById('metodo').value = '';
       document.getElementById('referencia').value = '';
       document.getElementById('modal-pago').style.display = 'flex';
@@ -386,5 +216,114 @@
         console.error('Error:', error);
         alert('Error al registrar el pago');
       });
+    });
+
+    // Inicializar FullCalendar y manejar clicks/consulta del día
+    document.addEventListener('DOMContentLoaded', function() {
+      var calendarEl = document.getElementById('calendar');
+      if (calendarEl) {
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+          initialView: 'dayGridMonth',
+          locale: 'es',
+          headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+          },
+          navLinks: true,
+          events: '/api/reservas-eventos/',
+          eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+          eventClick: function(info) {
+            var ev = info.event;
+            var props = ev.extendedProps || {};
+            if (props.tiene_saldo) {
+              alert('Esta reserva tiene saldo pendiente. Debe completar el pago primero.');
+              return;
+            }
+            abrirModalPago(ev.id, props.monto_pagar || 0, props.falta_pagar || 0, props.cliente || '');
+          },
+          dateClick: function(info) {
+            fetch(`/api/reservas-por-fecha/?fecha=${info.dateStr}`)
+              .then(r => r.json())
+              .then(data => renderReservasPorFecha(data.reservas || []))
+              .catch(err => { console.error(err); alert('Error al obtener reservas'); });
+          }
+        });
+        calendar.render();
+      }
+
+      function renderReservasPorFecha(list) {
+        const cont = document.getElementById('reservas-por-fecha');
+        cont.innerHTML = '';
+        if (!list || list.length === 0) {
+          cont.innerHTML = '<p style="color:#666;">No hay reservas para esa fecha.</p>';
+          return;
+        }
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th>Hora</th><th>Cancha</th><th>Cliente</th><th>Total</th><th>Pagado</th><th>Falta</th><th>Acciones</th></tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        list.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.hora_inicio}</td>
+            <td>${r.cancha}</td>
+            <td>${r.cliente || ''}</td>
+            <td>$${r.valor_total}</td>
+            <td>$${r.valor_pagado}</td>
+            <td style="color:#dc3545; font-weight:600;">$${r.falta_pagar}</td>
+            <td><button class="btn-small" style="background:#ff9800;color:#fff;border:none;padding:0.4rem 0.8rem;cursor:pointer;" onclick="abrirModalPago(${r.id}, ${r.valor_pagado}, ${r.falta_pagar}, '${r.cliente || ''}')">Registrar Pago</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        cont.appendChild(table);
+      }
+
+      // Inicializar contadores en vivo para pagos pendientes - actualiza cada 1 segundo
+      function actualizarContadores() {
+        document.querySelectorAll('.countdown').forEach(function(el) {
+          var segundos = parseInt(el.getAttribute('data-segundos'));
+          if (isNaN(segundos)) return;
+          
+          segundos = segundos - 1;
+          el.setAttribute('data-segundos', segundos);
+          
+          if (segundos <= 0) {
+            // Eliminar la fila cuando segundos llega a 0
+            var row = el.closest('.pago-row');
+            if (row) {
+              row.style.transition = 'opacity 0.5s ease-out';
+              row.style.opacity = '0';
+              setTimeout(function() { row.remove(); }, 500);
+            }
+            el.textContent = '00:00';
+          } else {
+            var mins = Math.floor(segundos / 60);
+            var secs = segundos % 60;
+            var display = (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            el.textContent = display;
+          }
+        });
+      }
+      
+      // Auto-refrescar tabla de pagos pendientes cada 60 segundos
+      function refrescarTablaPagosPendientes() {
+        fetch('/api/pagos-pendientes/')
+          .then(r => r.json())
+          .then(data => {
+            var oldTable = document.querySelector('#tabla-pagos-pendientes');
+            if (oldTable && data.html) {
+              oldTable.innerHTML = data.html;
+            }
+          })
+          .catch(err => console.error('Error al refrescar pagos:', err));
+      }
+      // Refrescar tabla cada 60 segundos (1 minuto)
+      setInterval(refrescarTablaPagosPendientes, 60000);
+      // Actualizar contador cada 1 segundo
+      setInterval(actualizarContadores, 1000);
     });
   </script>

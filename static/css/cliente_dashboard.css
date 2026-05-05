@@ -262,6 +262,25 @@ body {
   box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
 }
 
+.btn-ver-todas {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 200ms ease;
+}
+
+.btn-ver-todas:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+}
+
 /* EMPTY STATE */
 .empty-state {
   text-align: center;
@@ -518,6 +537,10 @@ body {
   .btn-nueva-reserva {
     width: 100%;
     justify-content: center;
+  }
+
+  .btn-ver-todas {
+    width: 100%;
   }
 
   .reservas-table {

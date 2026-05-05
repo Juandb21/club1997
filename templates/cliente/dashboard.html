@@ -21,6 +21,7 @@
         </div>
       </div>
       <nav class="nav">
+        <a href="{% url 'perfil' %}" class="nav-link" style="color:var(--white);">Perfil</a>
         <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
       </nav>
     </div>
@@ -80,7 +81,6 @@
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
               <p>No hay reservaciones activas</p>
-              <a href="{% url 'reserva_crear' %}" class="btn btn-primary">Crear Reserva</a>
             </div>
           {% endif %}
         </div>
@@ -90,7 +90,7 @@
       <div class="facturas-section">
         <div class="facturas-header">
           <h2>Mis Facturas</h2>
-          <a href="{% url 'facturas_lista' %}" class="link-ver-todas">Ver todas →</a>
+          <a href="{% url 'facturas_lista' %}" class="btn-ver-todas">Ver todas</a>
         </div>
 
         <div class="facturas-content">

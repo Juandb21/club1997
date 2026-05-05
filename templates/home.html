@@ -59,10 +59,10 @@
         
         {% if canchas %}
           <div style="display: grid; gap: 2rem;">
-            {% for cancha in canchas %}
+            {% for item in cancha_tarifas %}
               <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                <h3 style="margin-top: 0; color: #1e3c72;">{{ cancha.nombre }} - {{ cancha.get_tipo_display }}</h3>
-                <p style="color: #666; margin-bottom: 1.5rem;">{{ cancha.descripcion }}</p>
+                <h3 style="margin-top: 0; color: #1e3c72;">{{ item.cancha.nombre }} - {{ item.cancha.get_tipo_display }}</h3>
+                <p style="color: #666; margin-bottom: 1.5rem;">{{ item.cancha.descripcion }}</p>
                 
                 <table style="width: 100%; border-collapse: collapse;">
                   <thead>
@@ -72,13 +72,11 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for tarifa in tarifas %}
-                      {% if tarifa.cancha.id == cancha.id %}
-                        <tr style="border-bottom: 1px solid #eee;">
-                          <td style="padding: 1rem;">{{ tarifa.get_franja_display }}</td>
-                          <td style="padding: 1rem; text-align: right; font-weight: 600; color: #2a7f62;">${{ tarifa.precio_por_hora }}</td>
-                        </tr>
-                      {% endif %}
+                    {% for tarifa in item.tarifas %}
+                      <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 1rem;">{{ tarifa.get_franja_display }}</td>
+                        <td style="padding: 1rem; text-align: right; font-weight: 600; color: #2a7f62;">${{ tarifa.precio_por_hora }}</td>
+                      </tr>
                     {% endfor %}
                   </tbody>
                 </table>

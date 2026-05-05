@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Mi Perfil</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width:700px;margin:0 auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:1rem;">Mi Perfil</h2>
+
+        {% if messages %}
+          <div class="alert">
+            {% for m in messages %}
+              <p>{{ m }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" style="display:flex;flex-direction:column;gap:1rem;">
+          {% csrf_token %}
+          <label>Nombre</label>
+          <input type="text" value="{{ user.first_name }}" disabled style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <label>Correo</label>
+          <input type="email" value="{{ user.email }}" disabled style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <label for="celular">Celular</label>
+          <input id="celular" name="celular" type="tel" value="{% if role_profile %}{{ role_profile.phone }}{% endif %}" placeholder="9XXXXXXXX" style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <hr style="margin:1rem 0;">
+
+          <h3>Cambiar contraseña</h3>
+          <label for="current_password">Contraseña actual</label>
+          <input id="current_password" name="current_password" type="password" placeholder="Contraseña actual" style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <label for="new_password">Nueva contraseña</label>
+          <input id="new_password" name="new_password" type="password" placeholder="Nueva contraseña" style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <label for="new_password_confirm">Confirmar nueva contraseña</label>
+          <input id="new_password_confirm" name="new_password_confirm" type="password" placeholder="Confirmar nueva contraseña" style="padding:.6rem;border:1px solid #ddd;border-radius:6px;">
+
+          <button type="submit" style="padding:0.8rem;background:linear-gradient(135deg,#1e3c72 0%,#2a7f62 100%);color:white;border:none;border-radius:6px;font-weight:600;">Guardar cambios</button>
+        </form>
+
+        <a href="{% url 'cliente_dashboard' %}" style="display:block; margin-top:1rem; text-align:center; padding:0.7rem; background:#f0f2f5; color:#1a1a1a; border-radius:6px; text-decoration:none; font-weight:600;">Volver</a>
+
+      </div>
+    </div>
+  </main>
+</body>
+</html>

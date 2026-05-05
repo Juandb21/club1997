@@ -13,21 +13,24 @@ class Command(BaseCommand):
                 'password': 'admin123',
                 'first_name': 'Admin',
                 'last_name': 'Club',
-                'role': 'administrador'
+                    'role': 'administrador',
+                    'phone': '999999999'
             },
             {
                 'email': 'recepcion@club1997.com',
                 'password': 'recep123',
                 'first_name': 'Recepcionista',
                 'last_name': 'Club',
-                'role': 'recepcionista'
+                    'role': 'recepcionista',
+                    'phone': '988888888'
             },
             {
                 'email': 'cliente@email.com',
                 'password': 'cliente123',
                 'first_name': 'Cliente',
                 'last_name': 'Demo',
-                'role': 'cliente'
+                    'role': 'cliente',
+                    'phone': '977777777'
             }
         ]
 
