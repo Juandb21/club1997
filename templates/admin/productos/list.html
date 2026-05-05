@@ -1,0 +1,93 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Gestión de Productos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Productos</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2 style="margin: 0;">Productos Disponibles</h2>
+          <a href="{% url 'admin_producto_crear' %}" class="btn-nueva-reserva">+ Nuevo Producto</a>
+        </div>
+
+        {% if messages %}
+          <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+              <div style="padding: 1rem; border-radius: 6px; background: #d4edda; border-left: 4px solid #28a745;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if productos %}
+          <div class="reservas-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Imagen</th>
+                  <th>Nombre</th>
+                  <th>Categoría</th>
+                  <th>Precio</th>
+                  <th>Stock</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for producto in productos %}
+                  <tr>
+                    <td>
+                      {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
+                      {% else %}
+                        <div style="width: 50px; height: 50px; background: #f0f2f5; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.8rem;">Sin imagen</div>
+                      {% endif %}
+                    </td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>{{ producto.get_categoria_display }}</td>
+                    <td>${{ producto.precio }}</td>
+                    <td>{{ producto.stock }}</td>
+                    <td style="display: flex; gap: 0.5rem;">
+                      <a href="{% url 'admin_producto_editar' producto.id %}" class="btn-small">Editar</a>
+                      <a href="{% url 'admin_producto_eliminar' producto.id %}" class="btn-small" style="background: #dc3545;">Eliminar</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No hay productos registrados</p>
+            <a href="{% url 'admin_producto_crear' %}" class="btn btn-primary">Crear Primer Producto</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <a href="{% url 'admin_dashboard' %}" style="display: block; margin-top: 1.5rem; text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+    </div>
+  </main>
+</body>
+</html>

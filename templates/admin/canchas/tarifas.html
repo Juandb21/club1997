@@ -1,0 +1,70 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Tarifas de {{ cancha.nombre }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Configurar Tarifas</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width: 600px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom: 0.5rem;">Tarifas - {{ cancha.nombre }}</h2>
+        <p style="color: #666; margin-bottom: 2rem;">{{ cancha.get_tipo_display }}</p>
+
+        {% if messages %}
+          <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+              <div style="padding: 1rem; border-radius: 6px; background: #d4edda; border-left: 4px solid #28a745;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div style="display: grid; gap: 1.5rem;">
+          {% for franja in franjas_list %}
+            <form method="POST" style="display: grid; gap: 1rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #1e3c72;">
+              {% csrf_token %}
+              
+              <input type="hidden" name="franja" value="{{ franja.id }}">
+
+              <div>
+                <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">{{ franja.nombre }}</label>
+              </div>
+
+              <div style="display: flex; gap: 1rem;">
+                <input type="number" name="precio" step="0.01" min="0" 
+                       value="{% if franja.tarifa %}{{ franja.tarifa.precio_por_hora }}{% endif %}" 
+                       placeholder="Precio por hora" required
+                       style="flex: 1; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+                <button type="submit" style="padding: 0.8rem 1.5rem; background: #1e3c72; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Guardar</button>
+              </div>
+            </form>
+          {% endfor %}
+        </div>
+
+        <a href="{% url 'admin_canchas_list' %}" style="display: block; margin-top: 2rem; text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

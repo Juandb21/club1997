@@ -1,0 +1,165 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Mi Cuenta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Bienvenido, {{ user.first_name }}</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <!-- Sección Reservaciones -->
+      <div class="reservaciones-section">
+        <div class="reservaciones-header">
+          <h2>Reservaciones</h2>
+          <a href="{% url 'reserva_crear' %}" class="btn-nueva-reserva">+ Nueva Reserva</a>
+        </div>
+
+        <div class="reservaciones-content">
+          {% if reservas %}
+            <div class="reservas-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cancha</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Duración</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for reserva in reservas %}
+                    <tr class="reserva-row estado-{{ reserva.estado }}">
+                      <td>{{ reserva.cancha.nombre }}</td>
+                      <td>{{ reserva.fecha|date:"d/m/Y" }}</td>
+                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
+                      <td>{{ reserva.duracion_horas }}h</td>
+                      <td>${{ reserva.valor_total }}</td>
+                      <td>
+                        <span class="badge badge-{{ reserva.estado }}">
+                          {{ reserva.get_estado_display }}
+                        </span>
+                      </td>
+                      <td>
+                        <a href="{% url 'reserva_detalle' reserva.id %}" class="btn-small">Ver</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <p>No hay reservaciones activas</p>
+              <a href="{% url 'reserva_crear' %}" class="btn btn-primary">Crear Reserva</a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Sección Facturas -->
+      <div class="facturas-section">
+        <div class="facturas-header">
+          <h2>Mis Facturas</h2>
+          <a href="{% url 'facturas_lista' %}" class="link-ver-todas">Ver todas →</a>
+        </div>
+
+        <div class="facturas-content">
+          {% if facturas %}
+            <div class="facturas-list">
+              {% for factura in facturas %}
+                <div class="factura-item">
+                  <div class="factura-numero">
+                    <span class="label">Factura</span>
+                    <span class="numero">{{ factura.numero_factura }}</span>
+                  </div>
+                  <div class="factura-tipo">
+                    <span class="badge badge-{{ factura.tipo }}">{{ factura.get_tipo_display }}</span>
+                  </div>
+                  <div class="factura-fecha">
+                    {{ factura.fecha_emision|date:"d/m/Y H:i" }}
+                  </div>
+                  <div class="factura-total">
+                    <span class="label">Total</span>
+                    <span class="valor">${{ factura.valor_total }}</span>
+                  </div>
+                  <a href="{% url 'factura_detalle' factura.id %}" class="btn-detalle">Descargar PDF</a>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state small">
+              <p>No tienes facturas registradas</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Estadísticas -->
+      <div class="estadisticas-section">
+        <h2>Mis Estadísticas</h2>
+        <div class="estadisticas-grid">
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Reservas Realizadas</span>
+              <span class="stat-valor">{{ reservas|length }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Total Gastado</span>
+              <span class="stat-valor">${{ total_gastado }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Club 1997. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

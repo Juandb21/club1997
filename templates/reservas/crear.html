@@ -1,0 +1,90 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Nueva Reserva</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Nueva Reserva</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width: 600px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom: 2rem;">Crear Nueva Reserva</h2>
+
+        {% if messages %}
+          <div class="messages" style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+              <div class="alert" style="padding: 1rem; border-radius: 6px; margin-bottom: 0.5rem;
+                {% if message.tags %}background: #fff3cd; border-left: 4px solid #ffc107;{% else %}background: #d4edda; border-left: 4px solid #28a745;{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          {% csrf_token %}
+
+          <div style="display: flex; flex-direction: column;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Cancha</label>
+            <select name="cancha_id" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+              <option value="">Selecciona una cancha</option>
+              {% for cancha in canchas %}
+                <option value="{{ cancha.id }}">{{ cancha.nombre }} ({{ cancha.get_tipo_display }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
+            <input type="date" name="fecha" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Hora Inicio</label>
+            <input type="time" name="hora_inicio" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Duración (horas)</label>
+            <input type="number" name="duracion_horas" value="1" min="1" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+          </div>
+
+          {% if clientes %}
+            <div style="display: flex; flex-direction: column;">
+              <label style="margin-bottom: 0.5rem; font-weight: 600;">Cliente (para Recepcionista)</label>
+              <select name="cliente_id" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+                <option value="">Selecciona un cliente (opcional)</option>
+                {% for cliente in clientes %}
+                  <option value="{{ cliente.id }}">{{ cliente.first_name }} ({{ cliente.email }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+
+          <button type="submit" style="padding: 0.8rem; background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Crear Reserva</button>
+          <a href="{% url 'cliente_dashboard' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

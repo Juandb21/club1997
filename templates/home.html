@@ -1,0 +1,96 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+  <header class="site-header">
+      <div class="container">
+      <div class="brand">Club 1997</div>
+      <nav class="nav">
+        <a class="btn-login" href="{% url 'login' %}">Iniciar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-left">
+          <h1>Alquila canchas de fútbol 5 y 7</h1>
+          <p>Cancha sintética profesional, iluminación nocturna, vestuarios y servicio de reservas online. Reserva tu horario en segundos.</p>
+          <a href="#servicios" class="cta">Reservar ahora</a>
+        </div>
+        <div class="hero-right">
+          <img src="{% static 'images/field-illustration.svg' %}" alt="Canchas Club 1997" class="hero-img">
+        </div>
+      </div>
+    </section>
+
+    <section id="instalaciones" class="section">
+      <div class="container">
+        <h2>Nuestras instalaciones</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>Cancha Futbol 7</h3>
+            <p>Espacio amplio para 7 jugadores, césped sintético de alta calidad y alumbrado profesional.</p>
+          </article>
+          <article class="card">
+            <h3>Cancha Futbol 5</h3>
+            <p>Ideal para partidos rápidos y torneos locales. Reservas por hora y opciones de entrenador.</p>
+          </article>
+          <article class="card">
+            <h3>Vestuarios y Servicios</h3>
+            <p>Duchas, lockers y estacionamiento. Seguridad y limpieza diaria.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="servicios" class="section alt">
+      <div class="container">
+        <h2>Servicios</h2>
+        <ul class="features">
+          <li>Reservas online y pagos seguros</li>
+          <li>Organización de torneos y ligas</li>
+          <li>Alquiler de arbitraje y equipamiento</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="comida" class="section">
+      <div class="container">
+        <h2>Comida y Bebidas</h2>
+        <p>Snack bar con bebidas, sándwiches, pizzas por porción y snacks saludables para tus descansos.</p>
+        <div class="food-grid">
+          <div class="food-item">
+            <h4>Bebidas</h4>
+            <p>Gaseosas, isotónicos y agua.</p>
+          </div>
+          <div class="food-item">
+            <h4>Comidas</h4>
+            <p>Pizzas por porción, hamburguesas y sándwiches.</p>
+          </div>
+          <div class="food-item">
+            <h4>Snacks</h4>
+            <p>Barritas energéticas y frutas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div>© Club 1997 — Canchas sintéticas</div>
+      <div>Contacto: admin@club1997.com | Tel: 555-1234</div>
+    </div>
+  </footer>
+</body>
+</html>

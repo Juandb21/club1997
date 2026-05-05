@@ -1,0 +1,90 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Gestión de Canchas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Gestión de Canchas</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2 style="margin: 0;">Canchas Disponibles</h2>
+          <a href="{% url 'admin_cancha_crear' %}" class="btn-nueva-reserva">+ Nueva Cancha</a>
+        </div>
+
+        {% if messages %}
+          <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+              <div style="padding: 1rem; border-radius: 6px; background: #d4edda; border-left: 4px solid #28a745;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if canchas %}
+          <div class="reservas-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Capacidad</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for cancha in canchas %}
+                  <tr>
+                    <td>{{ cancha.nombre }}</td>
+                    <td>{{ cancha.get_tipo_display }}</td>
+                    <td>{{ cancha.capacidad }} personas</td>
+                    <td>
+                      <span class="badge {% if cancha.estado %}badge-confirmada{% else %}badge-cancelada{% endif %}">
+                        {% if cancha.estado %}Activa{% else %}Inactiva{% endif %}
+                      </span>
+                    </td>
+                    <td style="display: flex; gap: 0.5rem;">
+                      <a href="{% url 'admin_cancha_editar' cancha.id %}" class="btn-small">Editar</a>
+                      <a href="{% url 'admin_cancha_tarifas' cancha.id %}" class="btn-small" style="background: #17a2b8;">Tarifas</a>
+                      <a href="{% url 'admin_cancha_eliminar' cancha.id %}" class="btn-small" style="background: #dc3545;">Eliminar</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No hay canchas registradas</p>
+            <a href="{% url 'admin_cancha_crear' %}" class="btn btn-primary">Crear Primera Cancha</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <a href="{% url 'admin_dashboard' %}" style="display: block; margin-top: 1.5rem; text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+    </div>
+  </main>
+</body>
+</html>

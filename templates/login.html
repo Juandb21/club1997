@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club 1997 - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <main class="page-wrap">
+        <section class="auth-card">
+            <aside class="brand-panel">
+                <div class="brand-dot" aria-hidden="true">
+                    <img src="{% static 'icons/ball.svg' %}" alt="logo" class="brand-icon">
+                </div>
+                <h1>Club 1997</h1>
+                <p class="subtitle">Canchas Sinteticas de Primera</p>
+
+                <ul class="benefits">
+                    <li>
+                        <span class="icon-box" aria-hidden="true"><img src="{% static 'icons/ball.svg' %}" alt="futbol"/></span>
+                        <div>
+                            <h2>Futbol 5 y 7</h2>
+                            <p>Canchas profesionales</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon-box" aria-hidden="true"><img src="{% static 'icons/calendar.svg' %}" alt="reservas"/></span>
+                        <div>
+                            <h2>Reservas Online</h2>
+                            <p>Reserva tu horario favorito</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="icon-box" aria-hidden="true"><img src="{% static 'icons/facility.svg' %}" alt="instalaciones"/></span>
+                        <div>
+                            <h2>Instalaciones de Primera</h2>
+                            <p>Equipamiento profesional</p>
+                        </div>
+                    </li>
+                </ul>
+            </aside>
+
+            <section class="form-panel">
+                <h3>¡Bienvenido!</h3>
+                <p class="form-subtitle">Inicia sesion para continuar</p>
+
+                {% if messages %}
+                    <div class="alert" role="alert">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    <label for="email">Correo Electronico</label>
+                    <div class="input-wrap">
+                        <span class="field-icon"><img src="{% static 'icons/mail.svg' %}" alt="email"></span>
+                        <input id="email" name="email" type="text" placeholder="tu@email.com" required>
+                    </div>
+
+                    <label for="password">Contrasena</label>
+                    <div class="input-wrap">
+                        <span class="field-icon"><img src="{% static 'icons/lock.svg' %}" alt="password"></span>
+                        <input id="password" name="password" type="password" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit">Iniciar Sesion</button>
+                </form>
+
+                <a class="register-link" href="#">¿No tienes cuenta? Registrate aqui</a>
+
+                <section class="demo-accounts" aria-label="Cuentas de prueba">
+                    <h4><img src="{% static 'icons/gamepad.svg' %}" alt="demo" class="demo-icon"> Cuentas de prueba:</h4>
+                    <ul>
+                        <li><span class="dot red"></span><strong>Admin:</strong> admin@club1997.com / admin123</li>
+                        <li><span class="dot blue"></span><strong>Recepcion:</strong> recepcion@club1997.com / recep123</li>
+                        <li><span class="dot green"></span><strong>Cliente:</strong> cliente@email.com / cliente123</li>
+                    </ul>
+                </section>
+            </section>
+        </section>
+    </main>
+</body>
+</html>

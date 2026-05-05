@@ -1,0 +1,175 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Recepción</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997 - Recepción</h1>
+          <p>Sistema de Gestión</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <!-- Tabs de navegación -->
+      <div class="nav-tabs" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <a href="{% url 'recepcionista_dashboard' %}" style="padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2);">
+          Reservaciones
+        </a>
+        <a href="{% url 'pdv_nueva_venta' %}" style="padding: 0.8rem 1.5rem; background: #f0f0f0; color: #666; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          Punto de Venta
+        </a>
+        <a href="{% url 'facturas_lista' %}" style="padding: 0.8rem 1.5rem; background: #f0f0f0; color: #666; border-radius: 8px; text-decoration: none; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          Facturas
+        </a>
+      </div>
+      <!-- Resumen del Día -->
+      <div class="resumen-dia">
+        <h2>Resumen del Día - {{ today|date:"d/m/Y" }}</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Reservas Confirmadas</span>
+              <span class="stat-valor">{{ cantidad_reservas_hoy }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Ingresos por Ventas</span>
+              <span class="stat-valor">${{ total_ventas_hoy }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reservas del Día -->
+      <div class="reservaciones-section">
+        <div class="reservaciones-header">
+          <h2>Reservas de Hoy</h2>
+          <a href="{% url 'reserva_crear' %}" class="btn-nueva-reserva">+ Nueva Reserva</a>
+        </div>
+
+        <div class="reservaciones-content">
+          {% if reservas_hoy %}
+            <div class="reservas-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Cliente</th>
+                    <th>Duración</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for reserva in reservas_hoy %}
+                    <tr>
+                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
+                      <td>{{ reserva.cancha.nombre }}</td>
+                      <td>{{ reserva.cliente.first_name }}</td>
+                      <td>{{ reserva.duracion_horas }}h</td>
+                      <td>${{ reserva.valor_total }}</td>
+                      <td><span class="badge badge-{{ reserva.estado }}">{{ reserva.get_estado_display }}</span></td>
+                      <td><a href="{% url 'reserva_detalle' reserva.id %}" class="btn-small">Ver</a></td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <p>No hay reservas confirmadas para hoy</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Ventas del Día -->
+      <div class="facturas-section">
+        <h2>Ventas Realizadas Hoy</h2>
+        <div class="facturas-content">
+          {% if ventas_hoy %}
+            <div class="facturas-list">
+              {% for venta in ventas_hoy %}
+                <div class="factura-item">
+                  <div class="factura-numero">
+                    <span class="label">Venta</span>
+                    <span class="numero">#{{ venta.id }}</span>
+                  </div>
+                  <div class="factura-fecha">
+                    {{ venta.created_at|time:"H:i" }}
+                  </div>
+                  <div class="factura-total">
+                    <span class="label">Total</span>
+                    <span class="valor">${{ venta.valor_total }}</span>
+                  </div>
+                  <a href="{% url 'factura_detalle' venta.factura.id %}" class="btn-detalle">Ver Factura</a>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-state small">
+              <p>No hay ventas registradas hoy</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Botones de Acción -->
+      <div style="display: flex; gap: 1rem; margin-top: 3rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: center;">
+        <a href="{% url 'reserva_crear' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
+          Nueva Reserva
+        </a>
+        <a href="{% url 'pdv_nueva_venta' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
+          Nueva Venta
+        </a>
+        <a href="{% url 'facturas_lista' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
+          Ver Facturas
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Club 1997. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+</body>
+</html>

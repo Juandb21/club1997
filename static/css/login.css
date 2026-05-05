@@ -1,0 +1,361 @@
+:root {
+  --primary: #1f5ff5;
+  --secondary: #06c465;
+  --tertiary: #17bf8e;
+  --dark: #0b1733;
+  --light: #f4f7fb;
+  --text: #3f4e63;
+  --border: #d9dfe8;
+  --white: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--dark);
+  background: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.22), transparent 40%),
+              linear-gradient(135deg, #2d6ef5 0%, #17bf88 100%);
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.page-wrap {
+  width: min(100%, 1080px);
+}
+
+.auth-card {
+  width: 100%;
+  background: var(--white);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(8, 24, 64, 0.28);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* BRAND PANEL */
+.brand-panel {
+  padding: 4rem 3rem;
+  color: #eef9ff;
+  background: linear-gradient(165deg, #06b665 0%, #0f92a6 38%, #1f5ff5 100%);
+}
+
+.brand-dot {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: var(--white);
+  margin-bottom: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(8, 24, 64, 0.12);
+}
+
+.brand-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.brand-panel h1 {
+  margin: 0 0 0.6rem 0;
+  font-size: clamp(2.2rem, 3vw, 3rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.subtitle {
+  margin: 0.9rem 0 2.25rem;
+  font-size: 1.95rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+}
+
+/* BENEFITS LIST */
+.benefits {
+  list-style: none;
+  display: grid;
+  gap: 1.2rem;
+}
+
+.benefits li {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-box img {
+  width: 24px;
+  height: 24px;
+}
+
+.benefits h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+.benefits p {
+  margin: 0.12rem 0 0;
+  font-size: 0.94rem;
+  opacity: 0.95;
+}
+
+/* FORM PANEL */
+.form-panel {
+  background: var(--light);
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-panel h3 {
+  margin: 0 0 0.6rem 0;
+  font-size: clamp(2rem, 2.8vw, 3rem);
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.form-subtitle {
+  margin: 0.95rem 0 2rem;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.alert {
+  background: #ffebe9;
+  color: #b42318;
+  border: 1px solid #fecdc8;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.alert p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* LOGIN FORM */
+.login-form label {
+  display: block;
+  margin: 1.15rem 0 0.55rem;
+  color: #2a3d59;
+  font-size: 1.04rem;
+  font-weight: 700;
+}
+
+.input-wrap {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.field-icon {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.field-icon img {
+  width: 18px;
+  height: 18px;
+}
+
+.input-wrap input {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: transparent;
+  height: 58px;
+  padding: 0 1rem 0 2.75rem;
+  outline: none;
+  font-size: 1rem;
+  color: #334a67;
+  font-family: inherit;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.input-wrap input:focus {
+  border-color: #2a79ff;
+  box-shadow: 0 0 0 4px rgba(42, 121, 255, 0.13);
+}
+
+.login-form button {
+  margin-top: 1.65rem;
+  width: 100%;
+  height: 60px;
+  border: none;
+  border-radius: 16px;
+  color: var(--white);
+  font-size: 1.1rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  font-family: inherit;
+}
+
+.login-form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(31, 95, 245, 0.3);
+}
+
+.login-form button:active {
+  transform: translateY(0);
+}
+
+/* REGISTER LINK */
+.register-link {
+  margin-top: 1.2rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.register-link a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 700;
+  transition: opacity 160ms ease;
+}
+
+.register-link a:hover {
+  opacity: 0.8;
+}
+
+/* DEMO ACCOUNTS */
+.demo-accounts {
+  background: #ebf5f3;
+  border: 1px solid #d7e8e5;
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  color: #30445d;
+  margin-top: 1rem;
+}
+
+.demo-accounts h4 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.demo-accounts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    padding: 2.5rem;
+    border-radius: 28px 28px 0 0;
+  }
+
+  .brand-panel h1 {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1.5rem;
+  }
+
+  .form-panel {
+    padding: 2rem;
+    border-radius: 0 0 28px 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 1rem;
+  }
+
+  .auth-card {
+    border-radius: 20px;
+  }
+
+  .brand-panel,
+  .form-panel {
+    padding: 1.5rem;
+  }
+
+  .brand-dot {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.5rem;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .brand-panel h1 {
+    font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+    margin: 0.6rem 0 1.5rem;
+  }
+
+  .benefits {
+    gap: 1rem;
+  }
+
+  .icon-box {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-panel h3 {
+    font-size: 1.6rem;
+  }
+
+  .form-subtitle {
+    font-size: 1rem;
+    margin: 0.6rem 0 1.5rem;
+  }
+
+  .login-form button {
+    height: 48px;
+    font-size: 1rem;
+  }
+}

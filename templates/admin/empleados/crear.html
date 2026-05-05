@@ -1,0 +1,77 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Nuevo Empleado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Nuevo Empleado</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width: 600px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom: 2rem;">Crear Nuevo Empleado</h2>
+
+        {% if messages %}
+          <div style="margin-bottom: 1.5rem;">
+            {% for message in messages %}
+              <div style="padding: 1rem; border-radius: 6px; {% if message.tags %}background: #fff3cd;{% else %}background: #d4edda;{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          {% csrf_token %}
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Nombre Completo</label>
+            <input type="text" name="nombre" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email</label>
+            <input type="email" name="email" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Contraseña</label>
+            <input type="password" name="password" required minlength="6" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            <small style="color: #666;">Mínimo 6 caracteres</small>
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Rol</label>
+            <select name="rol" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+              <option value="">Selecciona un rol</option>
+              <option value="recepcionista">Recepcionista</option>
+              <option value="administrador">Administrador</option>
+            </select>
+          </div>
+
+          <button type="submit" style="padding: 0.8rem; background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Crear Empleado</button>
+          <a href="{% url 'admin_empleados_list' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

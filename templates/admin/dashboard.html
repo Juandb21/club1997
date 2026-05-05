@@ -1,0 +1,157 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Administración</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+  <style>
+    .admin-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .admin-nav a {
+      padding: 0.7rem 1.2rem;
+      background: #f0f2f5;
+      border-radius: 6px;
+      text-decoration: none;
+      color: #1a1a1a;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .admin-nav a:hover {
+      background: #1e3c72;
+      color: white;
+    }
+    .admin-nav a.active {
+      background: #1e3c72;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Administrador - {{ user.first_name }}</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <!-- Menú de Administración -->
+      <div class="admin-nav">
+        <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+        <a href="{% url 'admin_canchas_list' %}">Canchas</a>
+        <a href="{% url 'admin_productos_list' %}">Productos</a>
+        <a href="{% url 'admin_empleados_list' %}">Empleados</a>
+        <a href="{% url 'facturas_lista' %}">Facturas</a>
+      </div>
+
+      <!-- Estadísticas Generales -->
+      <div class="estadisticas-section">
+        <h2>Resumen General</h2>
+        
+        {% if periodo %}
+          <div style="margin-bottom: 1.5rem;">
+            <label>Período:</label>
+            <select onchange="location.href='?periodo=' + this.value" style="padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="dia" {% if periodo == 'dia' %}selected{% endif %}>Hoy</option>
+              <option value="semana" {% if periodo == 'semana' %}selected{% endif %}>Última Semana</option>
+              <option value="mes" {% if periodo == 'mes' %}selected{% endif %}>Último Mes</option>
+            </select>
+          </div>
+        {% endif %}
+
+        <div class="estadisticas-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"></path>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Ingresos Totales</span>
+              <span class="stat-valor">${{ total_ingresos|floatformat:2 }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Ventas</span>
+              <span class="stat-valor">{{ cantidad_ventas }}</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <div class="stat-info">
+              <span class="stat-label">Reservas Confirmadas</span>
+              <span class="stat-valor">{{ cantidad_reservas }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canchas Más Utilizadas -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="margin-bottom: 1rem;">Canchas Más Utilizadas</h3>
+          {% if canchas_mas_usadas %}
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+              {% for cancha in canchas_mas_usadas %}
+                <div style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid #ddd;">
+                  <span>{{ cancha.cancha__nombre }}</span>
+                  <span style="font-weight: 600;">{{ cancha.usos }} usos</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>Sin datos</p>
+          {% endif %}
+        </div>
+
+        <!-- Productos Más Vendidos -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="margin-bottom: 1rem;">Productos Más Vendidos</h3>
+          {% if productos_top %}
+            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+              {% for prod in productos_top %}
+                <div style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid #ddd;">
+                  <span>{{ prod.producto__nombre }}</span>
+                  <span style="font-weight: 600;">{{ prod.cantidad }} unidades</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p>Sin datos</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 Club 1997. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Mis Facturas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Mis Facturas</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom: 1.5rem;">Historial de Facturas</h2>
+
+        {% if facturas %}
+          <div class="reservas-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Total</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for factura in facturas %}
+                  <tr>
+                    <td>{{ factura.numero_factura }}</td>
+                    <td><span class="badge badge-{{ factura.tipo }}">{{ factura.get_tipo_display }}</span></td>
+                    <td>{{ factura.fecha_emision|date:"d/m/Y H:i" }}</td>
+                    <td>${{ factura.valor_total }}</td>
+                    <td>
+                      <a href="{% url 'factura_detalle' factura.id %}" class="btn-small">Ver</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="calendar-icon">📄</div>
+            <p>No tienes facturas registradas</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <a href="{% url 'cliente_dashboard' %}" style="display: block; margin-top: 1.5rem; text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+    </div>
+  </main>
+</body>
+</html>

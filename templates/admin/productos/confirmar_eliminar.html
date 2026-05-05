@@ -1,0 +1,48 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Confirmar Eliminación</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Confirmar</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width: 500px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <h2 style="margin: 0;">¿Eliminar Producto?</h2>
+        </div>
+
+        <p style="text-align: center; color: #666; margin-bottom: 2rem;">
+          Estás a punto de eliminar el producto <strong>{{ producto.nombre }}</strong>. Esta acción no se puede deshacer.
+        </p>
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+          {% csrf_token %}
+          <button type="submit" style="padding: 0.8rem; background: #dc3545; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Sí, eliminar producto</button>
+          <a href="{% url 'admin_productos_list' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

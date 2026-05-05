@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Club 1997 - Editar Empleado</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
+</head>
+<body>
+  <header class="dashboard-header">
+    <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Editar Empleado</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'logout' %}" class="btn-logout">Cerrar Sesión</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <div class="container">
+      <div style="max-width: 600px; margin: 0 auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom: 2rem;">Editar Empleado</h2>
+
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          {% csrf_token %}
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Nombre Completo</label>
+            <input type="text" name="nombre" value="{{ user.get_full_name|default:user.username }}" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Email</label>
+            <input type="email" name="email" value="{{ user.email }}" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Cambiar Contraseña (Dejar en blanco para mantener la actual)</label>
+            <input type="password" name="password" minlength="6" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          </div>
+
+          <div>
+            <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Rol</label>
+            <select name="rol" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+              <option value="recepcionista" {% if role == 'recepcionista' %}selected{% endif %}>Recepcionista</option>
+              <option value="administrador" {% if role == 'administrador' %}selected{% endif %}>Administrador</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" name="is_active" {% if is_active %}checked{% endif %} style="width: 18px; height: 18px; cursor: pointer;">
+              <span style="font-weight: 600;">Empleado Activo</span>
+            </label>
+          </div>
+
+          <button type="submit" style="padding: 0.8rem; background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Guardar Cambios</button>
+          <a href="{% url 'admin_empleados_list' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
