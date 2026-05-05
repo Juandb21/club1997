@@ -30,6 +30,10 @@ urlpatterns = [
     path('reservas/<int:reserva_id>/', views.reserva_detalle, name='reserva_detalle'),
     path('reservas/<int:reserva_id>/pago/', views.registrar_pago, name='registrar_pago'),
     
+    # Pagos en Efectivo (Recepcionista)
+    path('pagos/<int:pago_id>/aceptar/', views.aceptar_pago_efectivo, name='aceptar_pago_efectivo'),
+    path('pagos/<int:pago_id>/rechazar/', views.rechazar_pago_efectivo, name='rechazar_pago_efectivo'),
+    
     # APIs para disponibilidad
     path('api/disponibilidad/', views.verificar_disponibilidad_api, name='verificar_disponibilidad_api'),
     path('api/horarios-disponibles/', views.horarios_disponibles_api, name='horarios_disponibles_api'),

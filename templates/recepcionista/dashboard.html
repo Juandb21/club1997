@@ -41,7 +41,7 @@
       </div>
       <!-- Resumen del Día -->
       <div class="resumen-dia">
-        <h2>Resumen del Día - {{ today|date:"d/m/Y" }}</h2>
+        <h2>Resumen del Día - {{ hoy|date:"d/m/Y" }}</h2>
         <div class="stats-grid">
           <div class="stat-card">
             <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -151,6 +151,124 @@
         </div>
       </div>
 
+      <!-- Reservas de la Semana -->
+      <div class="reservaciones-section" style="margin-top: 2rem;">
+        <div class="reservaciones-header">
+          <h2>Reservas de la Semana ({{ inicio_semana|date:"d/m" }} - {{ fin_semana|date:"d/m/Y" }})</h2>
+          <a href="{% url 'reserva_crear' %}" class="btn-nueva-reserva">+ Nueva Reserva</a>
+        </div>
+
+        <div class="reservaciones-content">
+          {% if reservas_semana %}
+            <div class="reservas-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Cliente</th>
+                    <th>Duración</th>
+                    <th>Total</th>
+                    <th>Pagado</th>
+                    <th>Falta</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for reserva in reservas_semana %}
+                    <tr>
+                      <td>{{ reserva.fecha|date:"d/m" }}</td>
+                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
+                      <td>{{ reserva.cancha.nombre }}</td>
+                      <td>{{ reserva.cliente.first_name|default:"Sin asignar" }}</td>
+                      <td>{{ reserva.duracion_horas }}h</td>
+                      <td>${{ reserva.valor_total }}</td>
+                      <td>${{ reserva.valor_pagado }}</td>
+                      <td style="{% if reserva.get_falta_pagar > 0 %}color: #dc3545; font-weight: 600;{% endif %}">${{ reserva.get_falta_pagar }}</td>
+                      <td>
+                        {% if reserva.metodo_pago %}
+                          <span style="background: #e3f2fd; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem;">
+                            {{ reserva.get_metodo_pago_display }}
+                          </span>
+                        {% else %}
+                          <span style="color: #999;">-</span>
+                        {% endif %}
+                      </td>
+                      <td><span class="badge badge-{{ reserva.estado }}">{{ reserva.get_estado_display }}</span></td>
+                      <td style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <a href="{% url 'reserva_detalle' reserva.id %}" class="btn-small">Ver</a>
+                        {% if reserva.get_falta_pagar > 0 %}
+                          <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.get_falta_pagar }}, '{{ reserva.cliente.first_name }}')">Pagar</button>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="empty-state">
+              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <p>No hay reservas para esta semana</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Reservas con Pago en Efectivo Pendiente -->
+      {% if reservas_efectivo_pendientes %}
+        <div class="reservaciones-section" style="margin-top: 2rem; border-left: 4px solid #ff9800;">
+          <div class="reservaciones-header">
+            <h2 style="color: #ff9800;">Confirmación de Pagos en Efectivo Pendientes</h2>
+          </div>
+
+          <div class="reservaciones-content">
+            <div class="reservas-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cliente</th>
+                    <th>Cancha</th>
+                    <th>Total</th>
+                    <th>Pagado</th>
+                    <th>Falta Pagar</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for reserva in reservas_efectivo_pendientes %}
+                    <tr style="background: #fff3e0;">
+                      <td>{{ reserva.fecha|date:"d/m/Y" }}</td>
+                      <td>{{ reserva.hora_inicio|time:"H:i" }}</td>
+                      <td><strong>{{ reserva.cliente.first_name }}</strong></td>
+                      <td>{{ reserva.cancha.nombre }}</td>
+                      <td style="font-weight: 600;">${{ reserva.valor_total }}</td>
+                      <td style="color: #2a7f62; font-weight: 600;">${{ reserva.valor_pagado }}</td>
+                      <td style="color: #dc3545; font-weight: 600;">${{ reserva.get_falta_pagar }}</td>
+                      <td>
+                        <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.get_falta_pagar }}, '{{ reserva.cliente.first_name }}')">
+                          Registrar Pago
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       <!-- Botones de Acción -->
       <div style="display: flex; gap: 1rem; margin-top: 3rem; margin-bottom: 2rem; flex-wrap: wrap; justify-content: center;">
         <a href="{% url 'reserva_crear' %}" style="padding: 1rem 2rem; background: linear-gradient(135deg, #1f5ff5 0%, #06c465 100%); color: white; border-radius: 8px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px rgba(6, 196, 101, 0.2); transition: all 0.3s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(6, 196, 101, 0.3)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(6, 196, 101, 0.2)'">
@@ -166,10 +284,107 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <p>&copy; 2026 Club 1997. Todos los derechos reservados.</p>
+  <!-- Modal para Registrar Pago -->
+  <div id="modal-pago" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">Registrar Pago</h2>
+        <button onclick="cerrarModalPago()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">&times;</button>
+      </div>
+
+      <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <p style="margin: 0.5rem 0;"><strong>Cliente:</strong> <span id="modal-cliente"></span></p>
+        <p style="margin: 0.5rem 0;"><strong>Falta por Pagar:</strong> <span id="modal-falta" style="color: #dc3545; font-weight: 600;"></span></p>
+      </div>
+
+      <form id="form-pago" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+        {% csrf_token %}
+        <input type="hidden" id="reserva-id" name="reserva_id">
+
+        <div>
+          <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Monto a Pagar</label>
+          <input type="number" id="monto" name="monto" min="0" step="1" placeholder="0" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+          <small style="color: #666; display: block; margin-top: 0.3rem;">Máximo disponible: <span id="modal-maximo" style="font-weight: 600;"></span></small>
+        </div>
+
+        <div>
+          <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Método de Pago</label>
+          <select id="metodo" name="metodo" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+            <option value="">Selecciona un método</option>
+            <option value="transferencia">Transferencia Bancaria</option>
+            <option value="tarjeta">Tarjeta de Crédito</option>
+            <option value="efectivo">Efectivo</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Referencia (opcional)</label>
+          <input type="text" id="referencia" name="referencia" placeholder="Número de transferencia, últimos dígitos de tarjeta, etc." style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button type="button" onclick="cerrarModalPago()" style="padding: 0.8rem 1.5rem; background: #f0f0f0; color: #666; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button type="submit" style="padding: 0.8rem 1.5rem; background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Registrar Pago</button>
+        </div>
+      </form>
     </div>
-  </footer>
-</body>
-</html>
+  </div>
+
+  <script>
+    function abrirModalPago(reservaId, faltaPagar, cliente) {
+      document.getElementById('reserva-id').value = reservaId;
+      document.getElementById('modal-cliente').textContent = cliente;
+      document.getElementById('modal-falta').textContent = '$' + faltaPagar;
+      document.getElementById('modal-maximo').textContent = '$' + faltaPagar;
+      document.getElementById('monto').value = '';
+      document.getElementById('monto').max = faltaPagar;
+      document.getElementById('metodo').value = '';
+      document.getElementById('referencia').value = '';
+      document.getElementById('modal-pago').style.display = 'flex';
+    }
+
+    function cerrarModalPago() {
+      document.getElementById('modal-pago').style.display = 'none';
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modal-pago').addEventListener('click', function(event) {
+      if (event.target === this) {
+        cerrarModalPago();
+      }
+    });
+
+    // Manejar envío del formulario
+    document.getElementById('form-pago').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const reservaId = document.getElementById('reserva-id').value;
+      const monto = document.getElementById('monto').value;
+      const metodo = document.getElementById('metodo').value;
+      const referencia = document.getElementById('referencia').value;
+
+      const formData = new FormData();
+      formData.append('monto', monto);
+      formData.append('metodo', metodo);
+      formData.append('referencia', referencia);
+
+      fetch(`/reservas/${reservaId}/pago/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+      })
+      .then(response => {
+        if (response.ok) {
+          // Recargar la página después de registrar el pago
+          window.location.reload();
+        } else {
+          alert('Error al registrar el pago');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al registrar el pago');
+      });
+    });
+  </script>

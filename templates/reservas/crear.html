@@ -45,7 +45,7 @@
 
           <div style="display: flex; flex-direction: column;">
             <label style="margin-bottom: 0.5rem; font-weight: 600;">Cancha</label>
-            <select name="cancha_id" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+            <select id="cancha_select" name="cancha_id" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
               <option value="">Selecciona una cancha</option>
               {% for cancha in canchas %}
                 <option value="{{ cancha.id }}">{{ cancha.nombre }} ({{ cancha.get_tipo_display }})</option>
@@ -53,14 +53,23 @@
             </select>
           </div>
 
-          <div style="display: flex; flex-direction: column;">
-            <label style="margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
-            <input type="date" name="fecha" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+          <!-- Tarifas de la Cancha Seleccionada -->
+          <div id="tarifas_section" style="display: none; background: #f0f7ff; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #1e3c72;">
+            <h4 style="margin-top: 0; margin-bottom: 1rem; color: #1e3c72;">Tarifas por Franja Horaria</h4>
+            <div id="tarifas_list" style="display: grid; gap: 0.8rem;"></div>
           </div>
 
           <div style="display: flex; flex-direction: column;">
-            <label style="margin-bottom: 0.5rem; font-weight: 600;">Hora Inicio</label>
-            <input type="time" name="hora_inicio" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Fecha</label>
+            <input type="date" id="fecha_input" name="fecha" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <label style="margin-bottom: 0.5rem; font-weight: 600;">Hora Disponible</label>
+            <select id="hora_inicio_select" name="hora_inicio" required style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+              <option value="">Selecciona una hora</option>
+            </select>
+            <small id="hora_mensaje" style="color: #666; margin-top: 0.3rem; display: none;">Selecciona cancha y fecha para ver horarios disponibles</small>
           </div>
 
           <div style="display: flex; flex-direction: column;">
@@ -69,20 +78,160 @@
           </div>
 
           {% if clientes %}
-            <div style="display: flex; flex-direction: column;">
-              <label style="margin-bottom: 0.5rem; font-weight: 600;">Cliente (para Recepcionista)</label>
-              <select name="cliente_id" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
-                <option value="">Selecciona un cliente (opcional)</option>
-                {% for cliente in clientes %}
-                  <option value="{{ cliente.id }}">{{ cliente.first_name }} ({{ cliente.email }})</option>
-                {% endfor %}
-              </select>
+            <div style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 1.5rem; background: #fafafa;">
+              <h4 style="margin-top: 0; margin-bottom: 1rem;">Cliente</h4>
+              
+              <div style="display: flex; flex-direction: column; margin-bottom: 1rem;">
+                <label style="margin-bottom: 0.5rem; font-weight: 600;">Cliente Existente</label>
+                <select id="cliente_select" name="cliente_id" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;">
+                  <option value="">-- Selecciona un cliente --</option>
+                  {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}">{{ cliente.first_name }} ({{ cliente.email }})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              
+              <div style="text-align: center; color: #999; margin: 1rem 0;">O</div>
+              
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <h5 style="margin: 0.5rem 0; color: #1e3c72;">Crear Nuevo Cliente</h5>
+                
+                <div>
+                  <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Nombre Completo</label>
+                  <input type="text" id="nuevo_cliente_nombre" name="nuevo_cliente_nombre" placeholder="Juan Perez" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                
+                <div>
+                  <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Correo Electronico</label>
+                  <input type="email" id="nuevo_cliente_email" name="nuevo_cliente_email" placeholder="juan@email.com" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                </div>
+                
+                <div>
+                  <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Contrasena (minimo 6 caracteres)</label>
+                  <input type="password" id="nuevo_cliente_password" name="nuevo_cliente_password" placeholder="Contrasena" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;">
+                </div>
+              </div>
             </div>
           {% endif %}
 
           <button type="submit" style="padding: 0.8rem; background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Crear Reserva</button>
-          <a href="{% url 'cliente_dashboard' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+          {% if rol_usuario == 'recepcionista' %}
+            <a href="{% url 'recepcionista_dashboard' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+          {% elif rol_usuario == 'admin' %}
+            <a href="{% url 'admin_dashboard' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+          {% else %}
+            <a href="{% url 'cliente_dashboard' %}" style="text-align: center; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Cancelar</a>
+          {% endif %}
         </form>
+
+        {% if clientes %}
+          <script>
+            // Validacion: si elige cliente existente, limpiar campos de nuevo cliente
+            const clienteSelect = document.getElementById('cliente_select');
+            const newClientInputs = document.querySelectorAll('#nuevo_cliente_nombre, #nuevo_cliente_email, #nuevo_cliente_password');
+            
+            clienteSelect.addEventListener('change', function() {
+              if (this.value) {
+                newClientInputs.forEach(input => input.value = '');
+              }
+            });
+            
+            // Validacion: si llena datos de nuevo cliente, limpiar seleccion de existente
+            newClientInputs.forEach(input => {
+              input.addEventListener('focus', function() {
+                clienteSelect.value = '';
+              });
+            });
+          </script>
+        {% endif %}
+
+        <script>
+          // Datos de tarifas desde el servidor
+          const tarifasPorCancha = {{ tarifas_json|safe }};
+
+          // Elementos del DOM
+          const chanchaSelect = document.getElementById('cancha_select');
+          const fechaInput = document.getElementById('fecha_input');
+          const horaSelect = document.getElementById('hora_inicio_select');
+          const tarifasSection = document.getElementById('tarifas_section');
+          const tarifasList = document.getElementById('tarifas_list');
+          const horaMensaje = document.getElementById('hora_mensaje');
+
+          // Actualizar tarifas cuando cambia la cancha
+          chanchaSelect.addEventListener('change', function() {
+            const chanchaId = this.value;
+            if (chanchaId && tarifasPorCancha[chanchaId]) {
+              // Mostrar tarifas
+              tarifasSection.style.display = 'block';
+              tarifasList.innerHTML = '';
+              
+              tarifasPorCancha[chanchaId].forEach(tarifa => {
+                const tarifaDiv = document.createElement('div');
+                tarifaDiv.style.cssText = 'display: flex; justify-content: space-between; padding: 0.5rem; background: white; border-radius: 4px;';
+                tarifaDiv.innerHTML = `
+                  <span>${tarifa.franja}</span>
+                  <strong style="color: #2a7f62;">$${tarifa.precio}/hora</strong>
+                `;
+                tarifasList.appendChild(tarifaDiv);
+              });
+              
+              // Cargar horas disponibles si ya hay fecha
+              if (fechaInput.value) {
+                loadHorarios();
+              }
+            } else {
+              tarifasSection.style.display = 'none';
+              horaSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+              horaMensaje.style.display = 'block';
+            }
+          });
+
+          // Actualizar horas disponibles cuando cambia la fecha
+          fechaInput.addEventListener('change', function() {
+            if (chanchaSelect.value && this.value) {
+              loadHorarios();
+            }
+          });
+
+          // Cargar horarios disponibles
+          function loadHorarios() {
+            const chanchaId = chanchaSelect.value;
+            const fecha = fechaInput.value;
+            
+            if (!chanchaId || !fecha) {
+              horaSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+              horaMensaje.style.display = 'block';
+              return;
+            }
+
+            // Llamar a la API
+            fetch(`/api/horarios-disponibles/?cancha_id=${chanchaId}&fecha=${fecha}`)
+              .then(response => response.json())
+              .then(data => {
+                horaSelect.innerHTML = '<option value="">Selecciona una hora</option>';
+                
+                if (data.horarios && data.horarios.length > 0) {
+                  data.horarios.forEach(hora => {
+                    const option = document.createElement('option');
+                    // Convertir número de hora a formato HH:MM
+                    const horaFormato = `${String(hora).padStart(2, '0')}:00`;
+                    option.value = horaFormato;
+                    option.textContent = horaFormato;
+                    horaSelect.appendChild(option);
+                  });
+                  horaMensaje.style.display = 'none';
+                } else {
+                  horaMensaje.textContent = 'No hay horarios disponibles para esta fecha';
+                  horaMensaje.style.display = 'block';
+                }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                horaMensaje.textContent = 'Error al cargar horarios';
+                horaMensaje.style.display = 'block';
+              });
+          }
+        </script>
       </div>
     </div>
   </main>

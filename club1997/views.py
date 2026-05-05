@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, F
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -315,11 +315,48 @@ def reserva_crear(request):
             if fecha < datetime.now().date():
                 raise ValueError("No puedes reservar en fechas pasadas.")
             
-            # Crear reserva usando el servicio
-            cliente = request.user if es_cliente(request.user) else None
-            if not cliente and es_recepcionista(request.user):
+            # Determinar el cliente
+            cliente = None
+            if es_cliente(request.user):
+                cliente = request.user
+            elif es_recepcionista(request.user):
+                # Opcion 1: Usar cliente existente
                 cliente_id = request.POST.get('cliente_id')
-                cliente = User.objects.get(id=cliente_id)
+                if cliente_id:
+                    cliente = User.objects.get(id=cliente_id)
+                else:
+                    # Opcion 2: Crear nuevo cliente
+                    nombre = request.POST.get('nuevo_cliente_nombre', '').strip()
+                    email = request.POST.get('nuevo_cliente_email', '').strip()
+                    password = request.POST.get('nuevo_cliente_password', '').strip()
+                    
+                    if nombre and email and password:
+                        # Validar email unico
+                        if User.objects.filter(email__iexact=email).exists():
+                            raise ValueError(f"El correo {email} ya esta registrado.")
+                        
+                        # Validar contrasena
+                        if len(password) < 6:
+                            raise ValueError("La contrasena debe tener al menos 6 caracteres.")
+                        
+                        # Crear nuevo usuario
+                        cliente = User.objects.create_user(
+                            username=email,
+                            email=email,
+                            password=password,
+                            first_name=nombre
+                        )
+                        
+                        # Asignar rol de cliente
+                        UserRole.objects.create(
+                            user=cliente,
+                            role='cliente'
+                        )
+                    else:
+                        raise ValueError("Debes seleccionar un cliente existente o llenar los datos del nuevo cliente.")
+            
+            if not cliente:
+                raise ValueError("No se pudo determinar el cliente.")
             
             reserva = ReservaService.crear_reserva(
                 cliente=cliente,
@@ -338,10 +375,31 @@ def reserva_crear(request):
             messages.error(request, f'Error: {str(e)}')
     
     canchas = Cancha.objects.filter(estado=True)
-    context = {'canchas': canchas}
+    tarifas = TarifaHoraria.objects.select_related('cancha').filter(cancha__estado=True)
     
+    # Organizar tarifas por cancha
+    tarifas_por_cancha = {}
+    for tarifa in tarifas:
+        if tarifa.cancha.id not in tarifas_por_cancha:
+            tarifas_por_cancha[tarifa.cancha.id] = []
+        tarifas_por_cancha[tarifa.cancha.id].append({
+            'franja': tarifa.get_franja_display(),
+            'precio': tarifa.precio_por_hora
+        })
+    
+    context = {
+        'canchas': canchas,
+        'tarifas_json': json.dumps(tarifas_por_cancha)
+    }
+    
+    # Pasar rol del usuario para redireccionamiento
     if es_recepcionista(request.user):
         context['clientes'] = User.objects.filter(role_profile__role='cliente', role_profile__is_active=True)
+        context['rol_usuario'] = 'recepcionista'
+    elif es_admin(request.user):
+        context['rol_usuario'] = 'admin'
+    else:
+        context['rol_usuario'] = 'cliente'
     
     return render(request, 'reservas/crear.html', context)
 
@@ -415,12 +473,22 @@ def reserva_detalle(request, reserva_id):
     
     pagos = reserva.pagos.all()
     
+    # Determinar el rol del usuario para redireccionamiento
+    rol = None
+    if es_recepcionista(request.user):
+        rol = 'recepcionista'
+    elif es_admin(request.user):
+        rol = 'admin'
+    else:
+        rol = 'cliente'
+    
     context = {
         'reserva': reserva,
         'pagos': pagos,
         'pago_minimo': int(reserva.valor_total * 0.5),
         'metodos_pago': ['transferencia', 'tarjeta', 'efectivo'],
-        'falta_pagar': reserva.get_falta_pagar()
+        'falta_pagar': reserva.get_falta_pagar(),
+        'rol_usuario': rol
     }
     return render(request, 'reservas/detalle.html', context)
 
@@ -453,13 +521,21 @@ def registrar_pago(request, reserva_id):
             raise ValueError(f"Pago mínimo requerido: ${minimo_requerido}")
         
         if metodo == 'efectivo':
-            # Pago en efectivo con límite de 20 minutos
-            PagoService.crear_pago_efectivo_temporal(reserva)
-            pago = PagoService.crear_pago(reserva, monto, metodo, referencia)
-            messages.success(request, f'Pago en efectivo registrado. Tiene 20 minutos para confirmar.')
+            # Pago en efectivo: el cliente propone el monto, recepcionista lo acepta
+            # Se crea con estado pendiente_aceptacion y timer de 20 minutos
+            fecha_vencimiento = timezone.now() + timedelta(minutes=20)
+            pago = Pago.objects.create(
+                reserva=reserva,
+                monto=monto,
+                metodo=metodo,
+                referencia=referencia,
+                estado='pendiente_aceptacion',
+                fecha_vencimiento=fecha_vencimiento
+            )
+            messages.success(request, 'Pago en efectivo propuesto. La recepcionista tiene 20 minutos para aceptar.')
         else:
-            # Otros métodos
-            pago = PagoService.crear_pago(reserva, monto, metodo, referencia)
+            # Otros métodos: se confirman automáticamente
+            pago = PagoService.crear_pago(reserva, monto, metodo, referencia, estado='confirmado')
             PagoService.confirmar_pago(pago)
             messages.success(request, 'Pago registrado exitosamente.')
         
@@ -851,15 +927,89 @@ def cliente_dashboard(request):
 def recepcionista_dashboard(request):
     """Dashboard para recepcionistas"""
     hoy = timezone.now().date()
+    inicio_semana = hoy - timedelta(days=hoy.weekday())  # Lunes
+    fin_semana = inicio_semana + timedelta(days=6)  # Domingo
     
+    # Reservas del día
     reservas_hoy = Reserva.objects.filter(fecha=hoy).order_by('hora_inicio')
+    
+    # Reservas de la semana
+    reservas_semana = Reserva.objects.filter(
+        fecha__gte=inicio_semana,
+        fecha__lte=fin_semana
+    ).order_by('fecha', 'hora_inicio')
+    
+    # Pagos en efectivo pendientes de aceptación (nuevos pagos en efectivo)
+    pagos_efectivo_pendientes = Pago.objects.filter(
+        metodo='efectivo',
+        estado='pendiente_aceptacion'
+    ).select_related('reserva__cliente', 'reserva__cancha').order_by('fecha_vencimiento')
+    
+    # Ventas del día
     ventas_hoy = Venta.objects.filter(created_at__date=hoy)
     
     context = {
+        'hoy': hoy,
         'reservas_hoy': reservas_hoy,
+        'reservas_semana': reservas_semana,
+        'pagos_efectivo_pendientes': pagos_efectivo_pendientes,
         'ventas_hoy': ventas_hoy,
         'total_ventas_hoy': ventas_hoy.aggregate(Sum('valor_total'))['valor_total__sum'] or 0,
         'cantidad_reservas_hoy': reservas_hoy.filter(estado='confirmada').count(),
+        'inicio_semana': inicio_semana,
+        'fin_semana': fin_semana,
     }
     
     return render(request, 'recepcionista/dashboard.html', context)
+
+
+@login_required
+@user_passes_test(es_recepcionista)
+@require_http_methods(["POST"])
+def aceptar_pago_efectivo(request, pago_id):
+    """Acepta un pago en efectivo propuesto por un cliente"""
+    pago = get_object_or_404(Pago, id=pago_id, metodo='efectivo', estado='pendiente_aceptacion')
+    reserva = pago.reserva
+    
+    try:
+        # Actualizar estado del pago a confirmado
+        pago.estado = 'confirmado'
+        pago.save()
+        
+        # Actualizar valor pagado en la reserva
+        reserva.valor_pagado += pago.monto
+        
+        # Si se ha pagado al menos el 50%, cambiar estado a confirmada
+        if reserva.valor_pagado >= (reserva.valor_total * Decimal('0.5')):
+            if reserva.estado == 'pendiente':
+                reserva.estado = 'confirmada'
+                reserva.metodo_pago = 'efectivo'
+        
+        reserva.save()
+        
+        messages.success(request, f'Pago en efectivo aceptado: ${pago.monto}')
+        return redirect('recepcionista_dashboard')
+    
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('recepcionista_dashboard')
+
+
+@login_required
+@user_passes_test(es_recepcionista)
+@require_http_methods(["POST"])
+def rechazar_pago_efectivo(request, pago_id):
+    """Rechaza un pago en efectivo propuesto por un cliente"""
+    pago = get_object_or_404(Pago, id=pago_id, metodo='efectivo', estado='pendiente_aceptacion')
+    
+    try:
+        # Cambiar estado del pago a rechazado
+        pago.estado = 'rechazado'
+        pago.save()
+        
+        messages.warning(request, f'Pago en efectivo rechazado: ${pago.monto}')
+        return redirect('recepcionista_dashboard')
+    
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('recepcionista_dashboard')

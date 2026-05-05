@@ -232,10 +232,12 @@ class Pago(models.Model):
     metodo = models.CharField(max_length=20, choices=METODO_CHOICES)
     referencia = models.CharField(max_length=100, blank=True, null=True, help_text="Referencia del pago (número de transferencia, etc)")
     estado = models.CharField(max_length=20, default='pendiente', choices=[
-        ('pendiente', 'Pendiente'),
+        ('pendiente_aceptacion', 'Pendiente de Aceptacion'),
         ('confirmado', 'Confirmado'),
         ('rechazado', 'Rechazado'),
     ])
+    # Timer para pagos en efectivo (20 minutos para aceptar)
+    fecha_vencimiento = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

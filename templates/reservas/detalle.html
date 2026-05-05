@@ -102,6 +102,60 @@
             </div>
           {% endif %}
 
+          <!-- Cronómetro para Pago en Efectivo -->
+          {% if reserva.metodo_pago == 'efectivo' and reserva.fecha_vencimiento_efectivo %}
+            <div style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); padding: 1.5rem; border-radius: 8px; border-left: 4px solid #e65100; color: white; margin-bottom: 2rem;">
+              <h3 style="margin-top: 0; margin-bottom: 1rem;">Tiempo Restante para Pagar en Efectivo</h3>
+              <div style="display: flex; align-items: center; gap: 2rem;">
+                <div style="font-size: 3rem; font-weight: 800; font-family: 'Courier New', monospace;" id="countdown">00:00:00</div>
+                <div style="flex: 1;">
+                  <p style="margin: 0; font-size: 0.9rem;">Debes completar el pago en efectivo antes de que se agote el tiempo.</p>
+                  <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.9;">Pago mínimo: ${{ pago_minimo }}</p>
+                </div>
+              </div>
+            </div>
+
+            <script>
+              // Calcular tiempo restante para pago en efectivo
+              const vencimientoStr = "{{ reserva.fecha_vencimiento_efectivo|date:'Y-m-d H:i:s' }}";
+              const vencimientoTimestamp = new Date("{{ reserva.fecha_vencimiento_efectivo|date:'Y-m-d\TH:i:s' }}").getTime();
+              let tiempoVencido = false;
+              
+              function actualizarCronometro() {
+                if (tiempoVencido) return;
+                
+                const ahora = new Date().getTime();
+                const diferencia = vencimientoTimestamp - ahora;
+                const countdownElem = document.getElementById('countdown');
+                
+                if (!countdownElem) return;
+                
+                if (diferencia <= 0) {
+                  tiempoVencido = true;
+                  const parent = countdownElem.parentElement.parentElement;
+                  parent.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                  parent.innerHTML = '<h3 style="color: white; margin: 0;">Tiempo Vencido</h3><p style="color: white; margin: 0.5rem 0 0 0; font-size: 0.9rem;">La reserva ha sido cancelada por falta de pago.</p>';
+                  return;
+                }
+                
+                const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+                const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
+                
+                const tiempoFormato = 
+                  (horas < 10 ? '0' : '') + horas + ':' +
+                  (minutos < 10 ? '0' : '') + minutos + ':' +
+                  (segundos < 10 ? '0' : '') + segundos;
+                
+                countdownElem.textContent = tiempoFormato;
+              }
+              
+              // Actualizar inmediatamente y luego cada segundo
+              actualizarCronometro();
+              setInterval(actualizarCronometro, 1000);
+            </script>
+          {% endif %}
+
           <!-- Formulario de Pago (si falta pagar) -->
           {% if reserva.estado == 'pendiente' and reserva.get_falta_pagar > 0 %}
             <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #1e3c72;">
@@ -136,7 +190,13 @@
           {% endif %}
         </div>
 
-        <a href="{% url 'cliente_dashboard' %}" style="text-align: center; display: block; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+        {% if rol_usuario == 'recepcionista' %}
+          <a href="{% url 'recepcionista_dashboard' %}" style="text-align: center; display: block; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+        {% elif rol_usuario == 'admin' %}
+          <a href="{% url 'admin_dashboard' %}" style="text-align: center; display: block; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+        {% else %}
+          <a href="{% url 'cliente_dashboard' %}" style="text-align: center; display: block; padding: 0.8rem; background: #f0f2f5; color: #1a1a1a; border-radius: 6px; text-decoration: none; font-weight: 600;">Volver</a>
+        {% endif %}
       </div>
     </div>
   </main>

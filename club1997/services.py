@@ -129,14 +129,14 @@ class PagoService:
         return valor_pagado >= minimo_50_porciento
     
     @staticmethod
-    def crear_pago(reserva, monto: Decimal, metodo: str, referencia: str = None) -> Pago:
+    def crear_pago(reserva, monto: Decimal, metodo: str, referencia: str = None, estado: str = 'pendiente_aceptacion') -> Pago:
         """Crea un registro de pago para una reserva"""
         pago = Pago.objects.create(
             reserva=reserva,
             monto=monto,
             metodo=metodo,
             referencia=referencia,
-            estado='pendiente'
+            estado=estado
         )
         return pago
     
