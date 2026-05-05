@@ -897,6 +897,12 @@ def admin_dashboard(request):
         fecha_inicio = hoy - timedelta(days=7)
     else:  # mes
         fecha_inicio = hoy - timedelta(days=30)
+
+    def barras_porcentaje(items, value_key):
+        maximo = max([item[value_key] for item in items], default=0)
+        for item in items:
+            item['porcentaje'] = int((item[value_key] / maximo) * 100) if maximo else 0
+        return items
     
     # Estadísticas de ventas
     ventas = Venta.objects.filter(created_at__date__gte=fecha_inicio)
@@ -923,6 +929,58 @@ def admin_dashboard(request):
         cantidad=Sum('cantidad'),
         ingresos=Sum('subtotal')
     ).order_by('-cantidad')[:5]
+
+    # Graficos de barras segun el periodo seleccionado
+    dias_rango = (hoy - fecha_inicio).days + 1
+    ventas_por_periodo = []
+    for i in range(dias_rango):
+        fecha = fecha_inicio + timedelta(days=i)
+        total_fecha = Venta.objects.filter(
+            created_at__date=fecha
+        ).aggregate(Sum('valor_total'))['valor_total__sum'] or 0
+        ventas_por_periodo.append({
+            'label': fecha.strftime('%d/%m'),
+            'valor': float(total_fecha),
+            'valor_display': f'${int(total_fecha)}',
+        })
+    ventas_por_periodo = barras_porcentaje(ventas_por_periodo, 'valor')
+
+    dias_nombre = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo']
+    dias_uso = []
+    for i in range(dias_rango):
+        fecha = fecha_inicio + timedelta(days=i)
+        usos = Reserva.objects.filter(
+            estado='confirmada',
+            fecha=fecha
+        ).count()
+        dias_uso.append({
+            'label': f'{dias_nombre[fecha.weekday()]} {fecha.strftime("%d/%m")}',
+            'valor': usos,
+            'valor_display': f'{usos} reservas',
+        })
+    dias_uso = [item for item in dias_uso if item['valor'] > 0]
+    dias_uso = sorted(dias_uso, key=lambda item: item['valor'], reverse=True)[:7]
+    dias_uso = barras_porcentaje(dias_uso, 'valor')
+
+    canchas_chart = [
+        {
+            'label': item['cancha__nombre'] or 'Sin nombre',
+            'valor': item['usos'] or 0,
+            'valor_display': f'{item["usos"] or 0} usos',
+        }
+        for item in canchas_mas_usadas
+    ]
+    canchas_chart = barras_porcentaje(canchas_chart, 'valor')
+
+    productos_chart = [
+        {
+            'label': item['producto__nombre'] or 'Producto eliminado',
+            'valor': item['cantidad'] or 0,
+            'valor_display': f'{item["cantidad"] or 0} unidades',
+        }
+        for item in productos_top
+    ]
+    productos_chart = barras_porcentaje(productos_chart, 'valor')
     
     # Estadísticas por día (últimos 30 días)
     estadisticas_diarias = []
@@ -952,6 +1010,10 @@ def admin_dashboard(request):
         'total_ingresos': float(total_ventas + total_reservas_ingresos),
         'canchas_mas_usadas': list(canchas_mas_usadas),
         'productos_top': list(productos_top),
+        'ventas_por_periodo': ventas_por_periodo,
+        'canchas_chart': canchas_chart,
+        'dias_uso': dias_uso,
+        'productos_chart': productos_chart,
         'estadisticas_diarias': estadisticas_diarias,
     }
     
@@ -1066,6 +1128,13 @@ def recepcionista_dashboard(request):
 
     reservas_efectivo_pendientes = []
     for r in reservas_efectivo_qs:
+        pago_pendiente = r.pagos.filter(
+            metodo='efectivo',
+            estado='pendiente_aceptacion'
+        ).order_by('-created_at').first()
+        if not pago_pendiente:
+            continue
+
         # calcular tiempo restante en segundos
         if r.fecha_vencimiento_efectivo:
             delta = r.fecha_vencimiento_efectivo - ahora
@@ -1077,8 +1146,10 @@ def recepcionista_dashboard(request):
         if segundos_restantes is not None and segundos_restantes <= 1200 and segundos_restantes > 0:
             reservas_efectivo_pendientes.append({
                 'reserva': r,
+                'pago': pago_pendiente,
+                'monto_pagar': pago_pendiente.monto,
                 'segundos_restantes': segundos_restantes,
-                'falta_pagar': r.get_falta_pagar()
+                'falta_pagar': r.valor_total - (r.valor_pagado + pago_pendiente.monto)
             })
     
     # Ventas del día
@@ -1163,6 +1234,13 @@ def pagos_pendientes_api(request):
 
     reservas_efectivo_pendientes = []
     for r in reservas_efectivo_qs:
+        pago_pendiente = r.pagos.filter(
+            metodo='efectivo',
+            estado='pendiente_aceptacion'
+        ).order_by('-created_at').first()
+        if not pago_pendiente:
+            continue
+
         if r.fecha_vencimiento_efectivo:
             delta = r.fecha_vencimiento_efectivo - ahora
             segundos_restantes = int(delta.total_seconds())
@@ -1172,8 +1250,10 @@ def pagos_pendientes_api(request):
         if segundos_restantes is not None and segundos_restantes <= 1200 and segundos_restantes > 0:
             reservas_efectivo_pendientes.append({
                 'reserva': r,
+                'pago': pago_pendiente,
+                'monto_pagar': pago_pendiente.monto,
                 'segundos_restantes': segundos_restantes,
-                'falta_pagar': r.get_falta_pagar()
+                'falta_pagar': r.valor_total - (r.valor_pagado + pago_pendiente.monto)
             })
 
     # Generar HTML de la tabla
@@ -1184,6 +1264,9 @@ def pagos_pendientes_api(request):
     if reservas_efectivo_pendientes:
         for item in reservas_efectivo_pendientes:
             r = item['reserva']
+            pago = item['pago']
+            monto_pagar = item['monto_pagar']
+            falta_pagar = item['falta_pagar']
             seg = item['segundos_restantes']
             mins = seg // 60
             secs = seg % 60
@@ -1193,9 +1276,9 @@ def pagos_pendientes_api(request):
             html += f'<td><strong>{r.cliente.first_name}</strong></td>'
             html += f'<td>{r.cancha.nombre}</td>'
             html += f'<td style="font-weight: 600;">${r.valor_total}</td>'
-            html += f'<td style="color: #dc3545; font-weight: 600;">${r.valor_pagado}</td>'
+            html += f'<td style="color: #dc3545; font-weight: 600;">${monto_pagar}</td>'
             html += f'<td><span class="countdown" data-segundos="{seg}" style="font-weight: 600; font-family: monospace; font-size: 1.1rem;">{tiempo_display}</span></td>'
-            html += f'<td><button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({r.id}, {r.valor_pagado}, {item["falta_pagar"]}, \'{r.cliente.first_name}\')">Pagar</button></td>'
+            html += f'<td><button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({r.id}, {monto_pagar}, {falta_pagar}, \'{r.cliente.first_name}\', {pago.id}, {r.valor_total}, {r.valor_pagado})">Pagar</button></td>'
             html += '</tr>'
     else:
         html += '<tr><td colspan="7" style="text-align:center;color:#666;padding:1rem;">No hay pagos en efectivo pendientes</td></tr>'
@@ -1235,7 +1318,10 @@ def reservas_eventos_api(request):
             minutos_restantes = int((r.fecha_vencimiento_efectivo - ahora).total_seconds() // 60)
 
         falta_pagar = float(r.get_falta_pagar() or 0)
-        tiene_saldo = falta_pagar > 0
+        valor_total = float(r.valor_total or 0)
+        valor_pagado = float(r.valor_pagado or 0)
+        abono_minimo = valor_total * 0.5
+        requiere_abono = r.estado == 'pendiente' and valor_pagado < abono_minimo
 
         eventos.append({
             'id': r.id,
@@ -1244,13 +1330,13 @@ def reservas_eventos_api(request):
             'end': end_dt_event.isoformat(),
             'extendedProps': {
                 'falta_pagar': falta_pagar,
-                'monto_pagar': float(r.valor_pagado or 0),
-                'valor_total': float(r.valor_total or 0),
-                'valor_pagado': float(r.valor_pagado or 0),
+                'monto_pagar': falta_pagar,
+                'valor_total': valor_total,
+                'valor_pagado': valor_pagado,
                 'minutos_restantes': minutos_restantes,
                 'cliente': r.cliente.first_name if r.cliente else None,
                 'cancha': r.cancha.nombre,
-                'tiene_saldo': tiene_saldo,
+                'requiere_abono': requiere_abono,
             }
         })
 

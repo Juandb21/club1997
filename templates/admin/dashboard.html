@@ -31,6 +31,151 @@
       background: #1e3c72;
       color: white;
     }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .chart-card {
+      background: #f8f9fa;
+      border: 1px solid #e8edf3;
+      border-radius: 10px;
+      padding: 1.4rem;
+    }
+    .chart-card h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.05rem;
+    }
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 170px) 1fr minmax(80px, auto);
+      gap: 0.8rem;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .bar-label {
+      color: #1a1a1a;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bar-track {
+      height: 14px;
+      background: #e8edf3;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      min-width: 4px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a7f62 100%);
+    }
+    .bar-value {
+      color: #1a1a1a;
+      font-weight: 800;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .vertical-chart {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 0.8rem;
+      min-height: 320px;
+    }
+    .y-axis {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0.2rem 0 2rem;
+      color: #666;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .vertical-bars-wrap {
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+    }
+    .vertical-bars {
+      min-width: 520px;
+      height: 290px;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.55rem;
+      padding: 0.4rem 0.4rem 2rem;
+      border-left: 1px solid #d8e0ea;
+      border-bottom: 1px solid #d8e0ea;
+      background:
+        linear-gradient(to top, #dfe6ef 1px, transparent 1px) 0 0 / 100% 25%;
+    }
+    .vertical-bar-item {
+      flex: 1;
+      min-width: 34px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      position: relative;
+    }
+    .vertical-value {
+      position: absolute;
+      bottom: calc(var(--bar-height) + 0.35rem);
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      white-space: nowrap;
+    }
+    .vertical-bar {
+      width: 100%;
+      height: var(--bar-height);
+      min-height: 0;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(180deg, #2a7f62 0%, #1e3c72 100%);
+    }
+    .vertical-label {
+      position: absolute;
+      bottom: -1.65rem;
+      color: #1a1a1a;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+      transform: rotate(-35deg);
+      transform-origin: top right;
+    }
+    .chart-empty {
+      padding: 2rem;
+      text-align: center;
+      color: #666;
+      background: white;
+      border-radius: 8px;
+    }
+    .estadisticas-section > div[style="margin-bottom: 2rem;"] {
+      display: none;
+    }
+    @media (max-width: 900px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .bar-row {
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+      }
+      .bar-value {
+        text-align: left;
+      }
+      .vertical-chart {
+        grid-template-columns: 38px 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -109,6 +254,92 @@
               <span class="stat-valor">{{ cantidad_reservas }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="charts-grid">
+          <section class="chart-card">
+            <h3>Ventas</h3>
+            {% if ventas_por_periodo %}
+              <div class="vertical-chart">
+                <div class="y-axis">
+                  <span>100%</span>
+                  <span>75%</span>
+                  <span>50%</span>
+                  <span>25%</span>
+                  <span>0</span>
+                </div>
+                <div class="vertical-bars-wrap">
+                  <div class="vertical-bars">
+                    {% for item in ventas_por_periodo %}
+                      <div class="vertical-bar-item" title="{{ item.label }}: {{ item.valor_display }}" style="--bar-height: {{ item.porcentaje }}%;">
+                        <div class="vertical-value">{{ item.valor_display }}</div>
+                        <div class="vertical-bar"></div>
+                        <div class="vertical-label">{{ item.label }}</div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            {% else %}
+              <div class="chart-empty">Sin datos</div>
+            {% endif %}
+          </section>
+          <section class="chart-card">
+            <h3>Canchas mas utilizadas</h3>
+            {% if canchas_chart %}
+              <div class="bar-list">
+                {% for item in canchas_chart %}
+                  <div class="bar-row">
+                    <div class="bar-label" title="{{ item.label }}">{{ item.label }}</div>
+                    <div class="bar-track">
+                      <div class="bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                    </div>
+                    <div class="bar-value">{{ item.valor_display }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="chart-empty">Sin datos</div>
+            {% endif %}
+          </section>
+
+          <section class="chart-card">
+            <h3>Dias de mayor uso</h3>
+            {% if dias_uso %}
+              <div class="bar-list">
+                {% for item in dias_uso %}
+                  <div class="bar-row">
+                    <div class="bar-label" title="{{ item.label }}">{{ item.label }}</div>
+                    <div class="bar-track">
+                      <div class="bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                    </div>
+                    <div class="bar-value">{{ item.valor_display }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="chart-empty">Sin datos</div>
+            {% endif %}
+          </section>
+
+          <section class="chart-card">
+            <h3>Productos mas vendidos</h3>
+            {% if productos_chart %}
+              <div class="bar-list">
+                {% for item in productos_chart %}
+                  <div class="bar-row">
+                    <div class="bar-label" title="{{ item.label }}">{{ item.label }}</div>
+                    <div class="bar-track">
+                      <div class="bar-fill" style="width: {{ item.porcentaje }}%;"></div>
+                    </div>
+                    <div class="bar-value">{{ item.valor_display }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="chart-empty">Sin datos</div>
+            {% endif %}
+          </section>
         </div>
 
         <!-- Canchas Más Utilizadas -->

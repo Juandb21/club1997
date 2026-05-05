@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{% static 'css/cliente_dashboard.css' %}">
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js"></script>
 </head>
 <body>
   <!-- Header -->
@@ -71,7 +72,7 @@
                         <td><strong>{{ reserva.cliente.first_name }}</strong></td>
                         <td>{{ reserva.cancha.nombre }}</td>
                         <td style="font-weight: 600;">${{ reserva.valor_total }}</td>
-                        <td style="color: #dc3545; font-weight: 600;">${{ reserva.valor_pagado }}</td>
+                        <td style="color: #dc3545; font-weight: 600;">${{ item.monto_pagar }}</td>
                         <td>
                           {% if item.segundos_restantes is not None %}
                             <span class="countdown" data-segundos="{{ item.segundos_restantes }}" style="font-weight: 600; font-family: monospace; font-size: 1.1rem;">00:00</span>
@@ -80,7 +81,7 @@
                           {% endif %}
                         </td>
                         <td>
-                          <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({{ reserva.id }}, {{ reserva.valor_pagado }}, {{ item.falta_pagar }}, '{{ reserva.cliente.first_name }}')">
+                          <button class="btn-small" style="background: #ff9800; color: white; border: none; cursor: pointer; padding: 0.5rem 1rem;" onclick="abrirModalPago({{ reserva.id }}, {{ item.monto_pagar }}, {{ item.falta_pagar }}, '{{ reserva.cliente.first_name }}', {{ item.pago.id }}, {{ reserva.valor_total }}, {{ reserva.valor_pagado }})">
                             Pagar
                           </button>
                         </td>
@@ -124,6 +125,8 @@
 
       <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
         <p style="margin: 0.5rem 0;"><strong>Cliente:</strong> <span id="modal-cliente"></span></p>
+        <p style="margin: 0.5rem 0;"><strong>Total reserva:</strong> <span id="modal-total" style="font-weight: 600;"></span></p>
+        <p style="margin: 0.5rem 0;"><strong>Abonado:</strong> <span id="modal-abonado" style="color: #2a7f62; font-weight: 600;"></span></p>
         <p style="margin: 0.5rem 0;"><strong>Monto a Pagar:</strong> <span id="modal-monto-pagar" style="color: #dc3545; font-weight: 600;"></span></p>
         <p style="margin: 0.5rem 0;"><strong>Falta después del pago:</strong> <span id="modal-falta" style="color: #666;"></span></p>
       </div>
@@ -131,6 +134,7 @@
       <form id="form-pago" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
         {% csrf_token %}
         <input type="hidden" id="reserva-id" name="reserva_id">
+        <input type="hidden" id="pago-id" name="pago_id">
 
         <div>
           <label style="font-weight: 600; display: block; margin-bottom: 0.5rem;">Monto a Pagar (Acordado)</label>
@@ -162,13 +166,16 @@
   </div>
 
   <script>
-    function abrirModalPago(reservaId, montoPagar, faltaPagar, cliente) {
+    function abrirModalPago(reservaId, montoPagar, faltaPagar, cliente, pagoId = '', totalReserva = 0, abonado = 0) {
       document.getElementById('reserva-id').value = reservaId;
+      document.getElementById('pago-id').value = pagoId;
       document.getElementById('modal-cliente').textContent = cliente;
+      document.getElementById('modal-total').textContent = '$' + totalReserva;
+      document.getElementById('modal-abonado').textContent = '$' + abonado;
       document.getElementById('modal-monto-pagar').textContent = '$' + montoPagar;
       document.getElementById('modal-falta').textContent = '$' + faltaPagar;
-      document.getElementById('monto').value = '$' + montoPagar;
-      document.getElementById('metodo').value = '';
+      document.getElementById('monto').value = montoPagar;
+      document.getElementById('metodo').value = pagoId ? 'efectivo' : '';
       document.getElementById('referencia').value = '';
       document.getElementById('modal-pago').style.display = 'flex';
     }
@@ -188,9 +195,31 @@
     document.getElementById('form-pago').addEventListener('submit', function(e) {
       e.preventDefault();
       const reservaId = document.getElementById('reserva-id').value;
+      const pagoId = document.getElementById('pago-id').value;
       const monto = document.getElementById('monto').value;
       const metodo = document.getElementById('metodo').value;
       const referencia = document.getElementById('referencia').value;
+
+      if (pagoId) {
+        fetch(`/pagos/${pagoId}/aceptar/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        })
+        .then(response => {
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Error al registrar el pago');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al registrar el pago');
+        });
+        return;
+      }
 
       const formData = new FormData();
       formData.append('monto', monto);
@@ -225,6 +254,12 @@
         var calendar = new FullCalendar.Calendar(calendarEl, {
           initialView: 'dayGridMonth',
           locale: 'es',
+          buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día'
+          },
           headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -236,11 +271,19 @@
           eventClick: function(info) {
             var ev = info.event;
             var props = ev.extendedProps || {};
-            if (props.tiene_saldo) {
-              alert('Esta reserva tiene saldo pendiente. Debe completar el pago primero.');
+            if (props.requiere_abono) {
+              alert('Esta reserva todavía no tiene el abono mínimo. Debe registrar el abono primero.');
               return;
             }
-            abrirModalPago(ev.id, props.monto_pagar || 0, props.falta_pagar || 0, props.cliente || '');
+            abrirModalPago(
+              ev.id,
+              props.monto_pagar || 0,
+              0,
+              props.cliente || '',
+              '',
+              props.valor_total || 0,
+              props.valor_pagado || 0
+            );
           },
           dateClick: function(info) {
             fetch(`/api/reservas-por-fecha/?fecha=${info.dateStr}`)
@@ -274,7 +317,7 @@
             <td>$${r.valor_total}</td>
             <td>$${r.valor_pagado}</td>
             <td style="color:#dc3545; font-weight:600;">$${r.falta_pagar}</td>
-            <td><button class="btn-small" style="background:#ff9800;color:#fff;border:none;padding:0.4rem 0.8rem;cursor:pointer;" onclick="abrirModalPago(${r.id}, ${r.valor_pagado}, ${r.falta_pagar}, '${r.cliente || ''}')">Registrar Pago</button></td>
+            <td><button class="btn-small" style="background:#ff9800;color:#fff;border:none;padding:0.4rem 0.8rem;cursor:pointer;" onclick="abrirModalPago(${r.id}, ${r.falta_pagar}, 0, '${r.cliente || ''}', '', ${r.valor_total}, ${r.valor_pagado})">Registrar Pago</button></td>
           `;
           tbody.appendChild(tr);
         });

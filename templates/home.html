@@ -6,12 +6,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Club 1997</title>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+  <link rel="stylesheet" href="{% static 'css/home.css' %}?v=4">
 </head>
 <body>
   <header class="site-header">
-      <div class="container">
-      <div class="brand">Club 1997</div>
+      <div class="container header-content">
+      <div class="logo-section">
+        <div class="logo-circle">C97</div>
+        <div class="logo-text">
+          <h1>Club 1997</h1>
+          <p>Canchas sinteticas</p>
+        </div>
+      </div>
       <nav class="nav">
         <a class="btn-login" href="{% url 'login' %}">Iniciar Sesión</a>
       </nav>
@@ -24,7 +30,7 @@
         <div class="hero-left">
           <h1>Alquila canchas de fútbol 5 y 7</h1>
           <p>Cancha sintética profesional, iluminación nocturna, vestuarios y servicio de reservas online. Reserva tu horario en segundos.</p>
-          <a href="#servicios" class="cta">Reservar ahora</a>
+          <a href="#tarifas" class="cta">Reservar ahora</a>
         </div>
         <div class="hero-right">
           <img src="{% static 'images/field-illustration.svg' %}" alt="Canchas Club 1997" class="hero-img">
@@ -35,18 +41,22 @@
     <section id="instalaciones" class="section">
       <div class="container">
         <h2>Nuestras instalaciones</h2>
-        <div class="cards">
+        <div class="cards home-cards">
           <article class="card">
             <h3>Cancha Futbol 7</h3>
-            <p>Espacio amplio para 7 jugadores, césped sintético de alta calidad y alumbrado profesional.</p>
+            <p>Espacio amplio para partidos de 7 contra 7, cesped sintetico en buen estado e iluminacion para jugar de noche.</p>
           </article>
           <article class="card">
             <h3>Cancha Futbol 5</h3>
-            <p>Ideal para partidos rápidos y torneos locales. Reservas por hora y opciones de entrenador.</p>
+            <p>Ideal para partidos rapidos entre amigos, reservas por hora y disponibilidad entre semana o fines de semana.</p>
           </article>
           <article class="card">
-            <h3>Vestuarios y Servicios</h3>
-            <p>Duchas, lockers y estacionamiento. Seguridad y limpieza diaria.</p>
+            <h3>Petos para equipos</h3>
+            <p>Prestamos petos de colores para diferenciar facilmente los equipos durante el partido.</p>
+          </article>
+          <article class="card">
+            <h3>Zona para compartir</h3>
+            <p>Tenemos mesas para sentarse despues del partido, descansar y pasar un rato con amigos.</p>
           </article>
         </div>
       </div>
@@ -107,20 +117,20 @@
 
     <section id="comida" class="section">
       <div class="container">
-        <h2>Comida y Bebidas</h2>
-        <p>Snack bar con bebidas, sándwiches, pizzas por porción y snacks saludables para tus descansos.</p>
+        <h2>Bebidas y snacks</h2>
+        <p class="section-intro">Despues del partido puedes comprar algo sencillo para refrescarte y quedarte un rato compartiendo en las mesas.</p>
         <div class="food-grid">
           <div class="food-item">
-            <h4>Bebidas</h4>
-            <p>Gaseosas, isotónicos y agua.</p>
+            <h4>Bebidas frias</h4>
+            <p>Agua, Gatorade y cerveza.</p>
           </div>
           <div class="food-item">
-            <h4>Comidas</h4>
-            <p>Pizzas por porción, hamburguesas y sándwiches.</p>
+            <h4>Snacks de paquete</h4>
+            <p>Papas en paquete para acompanar el rato.</p>
           </div>
           <div class="food-item">
-            <h4>Snacks</h4>
-            <p>Barritas energéticas y frutas.</p>
+            <h4>Para quedarse un rato</h4>
+            <p>Mesas disponibles para conversar y descansar despues de jugar.</p>
           </div>
         </div>
       </div>
